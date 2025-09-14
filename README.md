@@ -1,7 +1,8 @@
-# ao
-### _Andy Suttles_
+# andy
 
-This is a project to do ... something.
+This is a project to do ... something ...
+
+...I hope.
 
 ## License
 

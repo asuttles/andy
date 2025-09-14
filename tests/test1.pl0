@@ -1,0 +1,13 @@
+const max = 10;
+var x, y, sum;
+
+procedure add(a, b);
+begin
+  sum := a + b;
+end;
+
+begin
+  x := 3;
+  y := 5;
+  add(x, y);
+end.

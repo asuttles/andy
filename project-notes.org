@@ -1,6 +1,192 @@
-ANDY OBERON-0 (ao)
+#+STARTUP: fold
+#+TITLE: ANDY COMPILER (ao)
 
-An Oberon-0 to wasm compiler written in Common Lisp.
+ANDY COMPILER
+
+A PL/0 to wasm compiler written in Common Lisp.
+
+* References
+- Wirth, Niklaus. Compiler construction. Germany: Addison-Wesley, 1996.
+* Magit Common Keystrokes
+| Operation                 | Keystroke(s) | Notes                                              |
+|---------------------------+--------------+----------------------------------------------------|
+| Open Magit status         | C-x g        | Opens the Magit status buffer for the current repo |
+| Stage a file              | s            | In the status buffer, put cursor on file/section   |
+| Unstage a file            | u            | Reverse stage                                      |
+| Stage a hunk / selection  | s            | When inside a hunk                                 |
+| Unstage a hunk            | u            | When inside a hunk                                 |
+| Commit staged changes     | c c          | Opens commit message buffer                        |
+| Amend last commit         | c a          | Amend previous commit                              |
+| Push                      | P u          | Push to upstream                                   |
+| Pull / fetch              | F u          | Fetch from upstream                                |
+| View log / history        | l l          | Show commit history                                |
+| Diff (unstaged changes)   | d            | View changes                                       |
+| Quit / close Magit buffer | q            | Exit status buffer                                 |
+
+* PL/0 EBNF
+#+begin_src pascal
+
+  program   = block "." .
+
+  block     = [ "const" ident "=" number { "," ident "=" number } ";" ]
+              [ "var" ident { "," ident } ";" ]
+              { "procedure" ident ";" block ";" }
+              statement .
+
+  statement = [ ident ":=" expression
+              | "call" ident
+              | "begin" statement { ";" statement } "end"
+              | "if" condition "then" statement
+              | "while" condition "do" statement ] .
+
+  condition = "odd" expression
+             | expression ( "=" | "#" | "<" | ">" ) expression .
+
+  expression = [ "+" | "-" ] term { ( "+" | "-" ) term } .
+
+  term       = factor { ( "*" | "/" ) factor } .
+
+  factor     = ident
+             | number
+             | "(" expression ")" .
+
+  ident  = letter { letter | digit } .
+  number = digit { digit } .
+  letter = "a" | "b" | ... | "z" .
+  digit  = "0" | "1" | ... | "9" .
+    
+#+end_src
+* Compiler Roadmap
+  Notes and roadmap for implementing a PL/0-style compiler in Common Lisp.
+  Working project name: =andy=, possible compiler binary: =andyc=.
+
+** Goals
+- Implement a PL/0 compiler with a real AST representation.
+- Support extensions later (floats, strings, richer functions).
+- Eventually target WebAssembly, starting with a stack-based VM backend.
+
+** Roadmap
+*** TODO Step 0: Project layout
+- Create directory structure:
+  #+begin_src shell
+  andy/
+    src/
+      lexer.lisp
+      parser.lisp
+      ast.lisp
+      symbol.lisp
+      emit.lisp
+      vm.lisp
+      main.lisp
+    tests/
+    examples/
+    andy.asd
+    package.lisp
+    README.md
+  #+end_src
+
+*** TODO Step 1: Define tokens
+- Represent tokens as (TYPE . VALUE).
+- Types include keywords, identifiers, numbers, operators, punctuation.
+- Example:
+  #+begin_src lisp
+  (cons :IDENT "x")
+  (cons :NUMBER 42)
+  #+end_src
+
+*** TODO Step 2: Lexer
+- Implement =tokenize= function.
+- Handle identifiers/keywords, numbers, symbols, := operator, etc.
+- Store line/col for error reporting.
+
+*** TODO Step 3: AST design
+- Decide AST node forms: use structs or CLOS classes.
+- Examples:
+  - Program, Block, Statement, Expression nodes.
+- Benefit: easier to expand to floats, strings, or richer type system later.
+
+*** TODO Step 4: Parser (recursive descent)
+- Functions mirror grammar:
+  - =parse-program=
+  - =parse-block=
+  - =parse-statement=
+  - =parse-condition=
+  - =parse-expression=
+  - =parse-term=
+  - =parse-factor=
+- For now, parser builds AST instead of directly emitting code.
+
+*** TODO Step 5: Symbol table
+- Maintain a table with entries:
+  | name | kind (const/var/proc) | value | level | address |
+- Functions: =enter-const=, =enter-var=, =enter-proc=, =find-symbol=.
+
+*** TODO Step 6: Code emission
+- Instruction format: (OP L M).
+- Opcodes:
+  - LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
+- OPR subcodes: RET, ADD, SUB, MUL, DIV, etc.
+- Implement =emit= function to build code vector.
+
+*** TODO Step 7: Virtual Machine
+- State: pc, bp, sp, stack array.
+- Implement =base= function for static link resolution.
+- =run-vm= executes emitted code.
+- First backend for quick testing.
+
+*** TODO Step 8: Codegen from AST
+- Walk AST and emit stack-machine instructions.
+- Examples:
+  - Assignment: generate expr code, then STO.
+  - If: condition + JPC + stmt + backpatch.
+  - While: loop label, cond, body, jumps.
+
+*** TODO Step 9: Testing plan
+- Minimal program: =begin end.=
+- Assignments and arithmetic.
+- Procedure call.
+- Factorial program.
+- Write harness in =tests/= that:
+  - Reads example file.
+  - Tokenizes, parses, builds AST.
+  - Emits and prints code.
+  - Runs VM.
+
+*** TODO Step 10: Error handling
+- Lexer tracks positions.
+- Parser raises syntax errors with expected vs. actual token.
+
+*** TODO Step 11: Extensions (later)
+- Functions with return values.
+- Typed variables (int, float).
+- Floating point arithmetic.
+- Strings and simple heap management.
+- Arrays and records.
+
+*** TODO Step 12: WASM backend
+- Map stack instructions to WASM text (=.wat=).
+- Strategy A: compile each PL/0 procedure to a WASM function with locals.
+- Strategy B: direct WASM emission with structured control flow.
+- Begin by restricting nested procedures for simpler mapping.
+
+** Reference
+- Niklaus Wirth, *Algorithms + Data Structures = Programs* (PL/0 chapters).
+- Instruction set:
+  | OP | Meaning |
+  |----+----------|
+  | 1  | LIT      |
+  | 2  | OPR      |
+  | 3  | LOD      |
+  | 4  | STO      |
+  | 5  | CAL      |
+  | 6  | INT      |
+  | 7  | JMP      |
+  | 8  | JPC      |
+
+** Next Action
+- [ ] Implement lexer (Step 2).
+- [ ] Sketch AST node structures (Step 3).
 
 * Log
-+ [2025-09-10 Wed] Created the project structure and repo.
++ [2025-09-10 Wed] Created the project structure and github repo.
+
