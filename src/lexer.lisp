@@ -1,13 +1,21 @@
 (defpackage :andy.lexer
-  (:use :cl)
+  (:use :cl :uiop)
   (:export :tokenize :read-file))
 
 (in-package :andy.lexer)
 
+;;; token datatype
+(defstruct token
+  type
+  lexeme
+  line
+  column)
+
+;;; Slurp source file into memory
 (defun read-file (filename)
   ;; stub for now
-  (format t "Reading file: ~A~%" filename)
-  '("int" "x" ":=" "5" ";"))
+  (format t "Reading file: ~A~%~%" filename)
+  (uiop:read-file-string filename))
 
 (defun tokenize (source)
   ;; stub for now

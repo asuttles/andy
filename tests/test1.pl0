@@ -1,9 +1,11 @@
 const max = 10;
+
 var x, y, sum;
 
 procedure add(a, b);
+
 begin
-  sum := a + b;
+   sum := a + b;
 end;
 
 begin
