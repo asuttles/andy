@@ -22,6 +22,21 @@
 ;;    :eql :neq :lss :leq :gtr :geq
 ;;    :assign :comma :semicolon :period :lparen :rparen))
 
+;;; Language Keywords
+(defconstant +keywords+
+;;;(defparameter +keywords+
+  '(("const" . :const)
+    ("var" . :var)
+    ("procedure" . :procedure)
+    ("call" . :call)
+    ("begin" . :being)
+    ("end" . :end)
+    ("if" . :if)
+    ("then" . :then)
+    ("while" . :while)
+    ("do" . :do)))
+
+
 ;;; Slurp source file into a string
 (defun read-file (filename)
   (format t "Reading file: ~A~%~%" filename)
@@ -29,12 +44,13 @@
     (file-error (e)
       (format t "~A~%" e) "")))
 
-;;; Match Digists and Letters
+;;; Predicates to Match Digits and Letters
 (defun digit-p  (c)
   (and c (char<= #\0 c #\9)))
 
 (defun letter-p (c)
   (and c (alpha-char-p c)))
+
 
 ;;; Make a Number Token
 (defun make-number-token (src pos line nl-pos)
@@ -49,7 +65,24 @@
 	   :line line
 	   :column (- start nl-pos)) *token-list*))
   pos)
-  
+
+
+;;; Make a Symbol Token
+(defun make-symbol-token (src pos line nl-pos)
+  (let ((start pos))
+    (loop for c = (char src pos)
+	  while (or (letter-p c) (digit-p c))
+	  do (incf pos))
+    (let* ((lexeme (subseq src start pos))
+	   (tok-type
+	     (or (cdr (assoc lexeme +keywords+ :test #'string=))
+		 :ident)))
+      (push (make-token :type tok-type
+			:lexeme lexeme
+			:line line
+			:column (- start nl-pos)) *token-list*)))
+  pos)
+
 ;;; Tokenize the string
 (defun tokenize (src)
   (format t "Scanning...~% ~A~%" src)
@@ -69,6 +102,9 @@
 	    ;; Numbers
 	    ((digit-p c)
 	     (setf pos (make-number-token src pos line nl-pos)))
+	    ;; Symbols
+	    ((letter-p c)
+	     (setf pos (make-symbol-token src pos line nl-pos)))
 	    ;; Newline
 	    ((char= c #\Newline)
 	     (progn (getc) (setf nl-pos pos) (incf line)))
