@@ -23,6 +23,18 @@ A PL/0 to wasm compiler written in Common Lisp.
 | Diff (unstaged changes)   | d            | View changes                                       |
 | Quit / close Magit buffer | q            | Exit status buffer                                 |
 
+* Keywords
+- const
+- var
+- procedure
+- call
+- begin
+- end
+- if
+- then
+- while
+- do
+- odd
 * PL/0 EBNF
 #+begin_src pascal
 
