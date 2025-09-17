@@ -14,14 +14,6 @@
 ;;; Token List
 (defvar *token-list* '())
 
-;;; All Token Types
-;;(defconstant +token-types+
-;;  '(:ident :number
-;;    :const :var :procedure :call :begin :end :if :then :while :do
-;;    :odd :plus :minus :times :divide
-;;    :eql :neq :lss :leq :gtr :geq
-;;    :assign :comma :semicolon :period :lparen :rparen))
-
 ;;; Language Keywords
 (defconstant +keywords+
 ;;;(defparameter +keywords+
@@ -36,6 +28,23 @@
     ("while" . :while)
     ("do" . :do)))
 
+(defconstant +operators+
+  '(("+"  . :plus)
+    ("-"  . :minus)
+    ("*"  . :times)
+    ("/"  . :divide)
+    ("="  . :eql)
+    ("#"  . :neq)
+    ("<"  . :lss)
+    ("<=" . :leq)
+    (">"  . :gtr)
+    (">=" . :geq)
+    (":=" . :assign)
+    (","  . :comma)
+    (";"  . :semicolon)
+    ("."  . :period)
+    ("("  . :lparen)
+    (")"  . :rparen)))
 
 ;;; Slurp source file into a string
 (defun read-file (filename)
@@ -50,7 +59,6 @@
 
 (defun letter-p (c)
   (and c (alpha-char-p c)))
-
 
 ;;; Make a Number Token
 (defun make-number-token (src pos line nl-pos)
@@ -83,9 +91,38 @@
 			:column (- start nl-pos)) *token-list*)))
   pos)
 
+
+;;; Make Operator Token
+(defun make-operator-token (src pos line nl-pos)
+  (let* ((c (char src pos))
+	 (next (when (< (1+ pos) (length src))
+		(char src (1+ pos))))
+	 (col (- pos nl-pos))
+	 (lex (string c))
+	 (lex-2 (if next (concatenate 'string lex (string next))
+		    lex))
+	 (typ (cdr (assoc lex +operators+ :test #'string=)))
+	 (typ-2 (cdr (assoc lex-2 +operators+ :test #'string=))))
+    (cond
+      ((not (null typ-2))
+       (progn
+	 (push
+	  (make-token :type typ-2 :lexeme lex-2 :line line :column col) *token-list*)
+	 (+ 2 pos)))
+      ((not (null typ))
+       (progn
+	 (push
+	  (make-token :type typ :lexeme lex :line line :column col) *token-list*)
+	 (+ 1 pos)))
+      (t
+       (progn
+	 (format t "~%lex: ~a (~a)~%" lex typ)
+	 (error "Symbol ~a on line ~a and column ~a cannot be resolved.~%" lex line col) 1)))))
+      
+
 ;;; Tokenize the string
 (defun tokenize (src)
-  (format t "Scanning...~% ~A~%" src)
+  (format t "Scanning Source File...~%~%" src)
   ;; Tokenizer State
   (let ((len (length src))
 	(pos 0)
@@ -105,6 +142,9 @@
 	    ;; Symbols
 	    ((letter-p c)
 	     (setf pos (make-symbol-token src pos line nl-pos)))
+	    ;; Operators
+	    ((find c "+-*/=<>:#,;.()")
+	     (setf pos (make-operator-token src pos line nl-pos)))
 	    ;; Newline
 	    ((char= c #\Newline)
 	     (progn (getc) (setf nl-pos pos) (incf line)))
