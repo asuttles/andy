@@ -1,5 +1,5 @@
 #+STARTUP: fold
-#+TITLE: ANDY COMPILER (ao)
+#+TITLE: ANDY COMPILER (andyc)
 
 ANDY COMPILER
 
@@ -22,6 +22,7 @@ A PL/0 to wasm compiler written in Common Lisp.
 | View log / history        | l l          | Show commit history                                |
 | Diff (unstaged changes)   | d            | View changes                                       |
 | Quit / close Magit buffer | q            | Exit status buffer                                 |
+|---------------------------+--------------+----------------------------------------------------|
 
 * Keywords
 - const
@@ -78,9 +79,9 @@ A PL/0 to wasm compiler written in Common Lisp.
 - Eventually target WebAssembly, starting with a stack-based VM backend.
 
 ** Roadmap
-*** TODO Step 0: Project layout
+*** DONE Step 0: Project layout
 - Create directory structure:
-  #+begin_src shell
+  #+begin_src
   andy/
     src/
       lexer.lisp
@@ -97,7 +98,7 @@ A PL/0 to wasm compiler written in Common Lisp.
     README.md
   #+end_src
 
-*** TODO Step 1: Define tokens
+*** DONE Step 1: Define tokens
 - Represent tokens as (TYPE . VALUE).
 - Types include keywords, identifiers, numbers, operators, punctuation.
 - Example:
@@ -106,12 +107,12 @@ A PL/0 to wasm compiler written in Common Lisp.
   (cons :NUMBER 42)
   #+end_src
 
-*** TODO Step 2: Lexer
+*** DONE Step 2: Lexer
 - Implement =tokenize= function.
 - Handle identifiers/keywords, numbers, symbols, := operator, etc.
 - Store line/col for error reporting.
 
-*** TODO Step 3: AST design
+*** WORK Step 3: AST design
 - Decide AST node forms: use structs or CLOS classes.
 - Examples:
   - Program, Block, Statement, Expression nodes.
@@ -181,24 +182,7 @@ A PL/0 to wasm compiler written in Common Lisp.
 - Strategy B: direct WASM emission with structured control flow.
 - Begin by restricting nested procedures for simpler mapping.
 
-** Reference
-- Niklaus Wirth, *Algorithms + Data Structures = Programs* (PL/0 chapters).
-- Instruction set:
-  | OP | Meaning |
-  |----+----------|
-  | 1  | LIT      |
-  | 2  | OPR      |
-  | 3  | LOD      |
-  | 4  | STO      |
-  | 5  | CAL      |
-  | 6  | INT      |
-  | 7  | JMP      |
-  | 8  | JPC      |
-
-** Next Action
-- [ ] Implement lexer (Step 2).
-- [ ] Sketch AST node structures (Step 3).
-
 * Log
 + [2025-09-10 Wed] Created the project structure and github repo.
 + [2025-09-14 Sun] Created asdf package structure.
++ [2025-09-17 Wed] Completed Lexer.
