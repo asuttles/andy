@@ -1,7 +1,13 @@
 (defpackage :andy.lexer
   (:use :cl :uiop)
-  (:export :tokenize :read-file))
-
+  (:export
+   :read-file
+   :tokenize 
+   :token-type
+   :token-lexeme
+   :token-line
+   :token-column))   
+   
 (in-package :andy.lexer)
 
 ;;; TOKEN datatype
@@ -21,7 +27,7 @@
     ("var" . :var)
     ("procedure" . :procedure)
     ("call" . :call)
-    ("begin" . :being)
+    ("begin" . :begin)
     ("end" . :end)
     ("if" . :if)
     ("then" . :then)
@@ -151,6 +157,8 @@
 	    ;; Space
 	    ((find c " \t\r") (getc))
 	    ;; Error
-	    (t (getc)))))))
+	    (t (getc))))))
+    (format t "Scanned ~a lines resulting in ~a tokens ~%"
+	    line (length *token-list*)))
   (reverse *token-list*))
 

@@ -112,7 +112,7 @@ A PL/0 to wasm compiler written in Common Lisp.
 - Handle identifiers/keywords, numbers, symbols, := operator, etc.
 - Store line/col for error reporting.
 
-*** WORK Step 3: AST design
+*** DONE Step 3: AST design
 - Decide AST node forms: use structs or CLOS classes.
 - Examples:
   - Program, Block, Statement, Expression nodes.
@@ -186,3 +186,4 @@ A PL/0 to wasm compiler written in Common Lisp.
 + [2025-09-10 Wed] Created the project structure and github repo.
 + [2025-09-14 Sun] Created asdf package structure.
 + [2025-09-17 Wed] Completed Lexer.
++ [2025-09-20 Sat] Completed AST.

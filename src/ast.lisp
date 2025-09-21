@@ -32,8 +32,8 @@
   ((symbol  :initarg :symbol :accessor var-symbol)))
 
 (defclass procedure-declaration (ast-node)
-  ((symbol  :initarg :symbol :accessor proc-symbol)
-   (block   :initarg :block  :accessor proc-block)))
+  ((symbol :initarg :symbol :accessor proc-symbol)
+   (body   :initarg :body  :accessor proc-body)))
 
 
 ;;; STATEMENTS
@@ -77,5 +77,3 @@
 (defclass unary-expression (expression)
   ((op         :initarg op   :accessor unary-op)
    (expression :initarg expr :accessor unary-expr)))
-
-
