@@ -3,11 +3,17 @@
 
 ANDY COMPILER
 
-A PL/0 to wasm compiler written in Common Lisp.
+Andy's PL/0+ to wasm compiler written in Common Lisp.
+
+* Goals
+- Implement a PL/0 compiler with a real AST representation.
+- Support extensions later (floats, strings, richer functions).
+- Eventually target WebAssembly, starting with a stack-based VM backend.
 
 * References
 - Wirth, Niklaus. Compiler construction. Germany: Addison-Wesley, 1996.
 * Magit Common Keystrokes
+|---------------------------+--------------+----------------------------------------------------|
 | Operation                 | Keystroke(s) | Notes                                              |
 |---------------------------+--------------+----------------------------------------------------|
 | Open Magit status         | C-x g        | Opens the Magit status buffer for the current repo |
@@ -35,7 +41,6 @@ A PL/0 to wasm compiler written in Common Lisp.
 - then
 - while
 - do
-- odd
 * PL/0 EBNF
 #+begin_src pascal
 
@@ -69,16 +74,7 @@ A PL/0 to wasm compiler written in Common Lisp.
   digit  = "0" | "1" | ... | "9" .
     
 #+end_src
-* Compiler Roadmap
-  Notes and roadmap for implementing a PL/0-style compiler in Common Lisp.
-  Working project name: =andy=, possible compiler binary: =andyc=.
-
-** Goals
-- Implement a PL/0 compiler with a real AST representation.
-- Support extensions later (floats, strings, richer functions).
-- Eventually target WebAssembly, starting with a stack-based VM backend.
-
-** Roadmap
+* Roadmap
 *** DONE Step 0: Project layout
 - Create directory structure:
   #+begin_src
@@ -182,6 +178,13 @@ A PL/0 to wasm compiler written in Common Lisp.
 - Strategy B: direct WASM emission with structured control flow.
 - Begin by restricting nested procedures for simpler mapping.
 
+* Stuff to Add
++ Comments
++ Function parameters
++ I/O
++ Arrays
++ Floating point numbers
++ Strings
 * Log
 + [2025-09-10 Wed] Created the project structure and github repo.
 + [2025-09-14 Sun] Created asdf package structure.

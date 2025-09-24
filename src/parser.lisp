@@ -1,5 +1,3 @@
-;;;; Notes: Refer to the project-notes.org for andy EBNF
-;;;;        Refer to ast.lisp for the AST object structure
 (defpackage :andy.parser
   (:use :cl)
   (:export :parse)
@@ -8,6 +6,7 @@
    :token-line :token-column))
 
 (in-package :andy.parser)
+
 
 ;;; Parser Data Structure and Token Operations
 (defstruct parser
@@ -24,7 +23,7 @@
   (incf (parser-pos parser)))
 
 (defun match-token (parser type)
-  (eq (token-type (current-token parser) type)))
+  (eq (token-type (current-token parser)) type))
 
 (defun expect-token (parser type)
   (let ((tok (current-token parser)))
@@ -42,7 +41,7 @@
 
 (defun get-number-token (parser)
   "Consume a number token and return its value as an integer."
-  (let ((tok (parser-expect parser :number)))
+  (let ((tok (expect-token parser :number)))
     (parse-integer (token-lexeme tok))))
 
 
@@ -65,8 +64,8 @@
   (let ((consts (parse-constant-declarations parser))
         (vars   (parse-variable-declarations parser))
         (procs  (parse-procedure-declarations parser))
-        (body   (parse-statement parser)))
-    (make-instance 'block
+        (body   (parse-statements parser)))
+    (make-instance 'program-block
                    :consts consts
                    :vars vars
                    :procs procs
@@ -75,11 +74,11 @@
 ;;; Block - Constants
 (defun parse-constant-declarations (parser)
   (when (eq (token-type (current-token parser)) :const)
-    (parser-advance parser)
+    (advance-token parser)
     (let ((consts nil))
       (loop
         (let ((name (get-ident-token parser)))
-          (parser-expect parser :eql)
+          (expect-token parser :eql)
           (let ((num (get-number-token parser)))
             (push (list name num) consts)))
         (if (match-token parser :comma)
@@ -108,9 +107,13 @@
     (let ((procs nil))
       (loop
 	(let ((name (get-ident-token parser)))
-	  (parser-expect parser :semicolon)
+	  (expect-token parser :semicolon)
 	  (let ((body (parse-block parser)))
-	    (parser-expect parser :semicolon)
+	    (expect-token parser :semicolon)
             (push (cons name body) procs)))
 	finally (return (nreverse procs))))))
 
+;;; Statements
+(defun parse-statements (parser)
+  (current-token parser)
+  nil)

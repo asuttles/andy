@@ -17,11 +17,11 @@
 (defclass program (ast-node)
   ((block :initarg :block :accessor program-block)))
 
-(defclass block (ast-node)
-  ((constants  :initarg :consts :accessor block-consts :initarg '())
-   (variables  :initarg :vars   :accessor block-vars   :initarg '())
-   (procedures :initarg :procs  :accessor block-procs  :initarg '())
-   (body       :initarg :body  :accessor block-body    :initarg '())))
+(defclass program-block (ast-node)
+  ((constants  :initarg :consts :accessor block-consts :initform '())
+   (variables  :initarg :vars   :accessor block-vars   :initform '())
+   (procedures :initarg :procs  :accessor block-procs  :initform '())
+   (body       :initarg :body  :accessor block-body    :initform '())))
 
 ;;; Declarations
 (defclass constant-declaration (ast-node)

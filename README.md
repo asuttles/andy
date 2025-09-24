@@ -38,10 +38,11 @@ end.
 
 src/
   lexer.lisp     ; Tokenizer for PL/0 source code
-  parser.lisp    ; Recursive-descent parser for PL/0 grammar
   ast.lisp       ; Abstract syntax tree (AST) definitions
+  parser.lisp    ; Recursive-descent parser for PL/0 grammar
+  analyzer.lisp  : Symbol table generator and symantic checking
+  emitter.lisp   ; Code generator for IR / WASM
   main.lisp      ; Main program driver
-  wasm.lisp      ; Code generator for IR / WASM
 
 tests/
   *.pl0          ; Example PL/0 programs for testing
@@ -52,9 +53,9 @@ tests/
 ### Requirements
 - Common Lisp implementation (tested with **SBCL** and **CCL**)
 - [Quicklisp](https://www.quicklisp.org/) package manager
-- [SLIME](https://common-lisp.net/project/slime/) or [Sly](https://github.com/joaotavora/sly) for Emacs integration (recommended)
+- [SLIME](https://common-lisp.net/project/slime/) for Emacs integration (recommended)
 
-### Building
+### Building the Project
 
 Clone the repository:
 
@@ -71,13 +72,16 @@ cd pl0-compiler
 
 - Implement basic optimizations (constant folding, dead code elimination)
 - Extend the language (I/O, strings, arrays, etc.)
-- Interactive REPL for experimenting with PL/0 code
 
 ## References
 
 Niklaus Wirth, Algorithms + Data Structures = Programs, 1976
 
 The PL/0 Grammar
+
+## More Information
+
+For more information about the project, see project-notes.org.
 
 ## License
 MIT License. See LICENSE for details.

@@ -2,14 +2,13 @@ const max = 10;
 
 var x, y, sum;
 
-procedure add(a, b);
-
+procedure add;
 begin
-   sum := a + b;
+   sum := x + y;
 end;
 
 begin
   x := 3;
   y := 5;
-  add(x, y);
+  call add;
 end.

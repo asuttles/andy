@@ -23,16 +23,16 @@
 ;;; Language Keywords
 (defconstant +keywords+
 ;;;(defparameter +keywords+
-  '(("const" . :const)
-    ("var" . :var)
+  '(("const"     . :const)
+    ("var"       . :var)
     ("procedure" . :procedure)
-    ("call" . :call)
-    ("begin" . :begin)
-    ("end" . :end)
-    ("if" . :if)
-    ("then" . :then)
-    ("while" . :while)
-    ("do" . :do)))
+    ("call"      . :call)
+    ("begin"     . :begin)
+    ("end"       . :end)
+    ("if"        . :if)
+    ("then"      . :then)
+    ("while"     . :while)
+    ("do"        . :do)))
 
 (defconstant +operators+
   '(("+"  . :plus)
@@ -128,7 +128,7 @@
 
 ;;; Tokenize the string
 (defun tokenize (src)
-  (format t "Scanning Source File...~%~%" src)
+  (format t "Scanning Source File...~%~%")
   ;; Tokenizer State
   (let ((len (length src))
 	(pos 0)
