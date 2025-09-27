@@ -41,8 +41,8 @@
   ((statements :initarg :stmnts :accessor cmpnd-stmnts) :initarg '()))
 
 (defclass assign-statement (statement)
-  ((variable :initarg :var :accessor assign-var)
-   (value    :initarg :val :accessor assign-val)))
+  ((variable   :initarg :var  :accessor assign-var)
+   (expression :initarg :expr :accessor assign-expr)))
 
 (defclass call-statement (statement)
   ((name :initarg :name :accessor call-proc-name)))
