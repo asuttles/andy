@@ -62,8 +62,8 @@
   (let ((block (parse-block parser)))
     (unless (eq (token-type (current-token parser)) :period)
       (error "Parse Error: Expected '.' at end of program"))
-    (advance parser)
-    (make-instance 'program-node :block block)))
+    (advance-token parser)
+    (make-instance 'program :block block)))
 
 ;;; Block
 (defun parse-block (parser)
@@ -108,16 +108,17 @@
 
 ;;; Block - Procedures
 (defun parse-procedure-declarations (parser)
-  (when (eq (token-type (current-token parser)) :procedure)
-    (advance-token parser)
-    (let ((procs nil))
-      (loop
-	(let ((name (get-ident-token parser)))
-	  (expect-token parser :semicolon)
-	  (let ((body (parse-block parser)))
-	    (expect-token parser :semicolon)
-            (push (cons name body) procs)))
-	finally (return (nreverse procs))))))
+ (let ((procs nil))
+   (loop while (eq (token-type (current-token parser)) :procedure)
+         do (progn
+              (advance-token parser)
+              (let ((name (get-ident-token parser)))
+                (expect-token parser :semicolon)
+                (let ((body (parse-block parser)))
+                  (expect-token parser :semicolon)
+                  (push (cons name body) procs)))))
+   (nreverse procs)))
+
 
 ;;; Statements
 (defun parse-statements (parser)
@@ -149,22 +150,52 @@
   (let ((stmnts '()))
     (loop
       do (push (parse-statements parser) stmnts)
-      until (eq (token-type (current-token parser) :end)))
-    (match-token parser :end)
-    (match-token parser :semicolon)
+      until (eq (token-type (current-token parser)) :end))
+    (expect-token parser :end)
     (make-instance 'compound-statement :stmnts (nreverse stmnts))))
 
+(defun parse-if (parser)
+  "Parse an if statement from PARSER,
+of the form if <condition> then <body>"
+  (expect-token parser :if)
+  (let ((condition (parse-condition parser)))
+    (expect-token parser :then)
+    (let ((body (parse-statements parser)))
+      (make-instance 'if-statement
+		     :cond condition
+		     :body body))))
+
+(defun parse-while (parser)
+  "Parse a while statement from PARSER,
+of the form while <condition> do <body>"
+  (expect-token parser :while)
+  (let ((condition (parse-condition parser)))
+    (expect-token parser :do)
+    (let ((body (parse-statements parser)))
+      (make-instance 'while-statement
+		     :cond condition
+		     :body body))))
 
 (defun parse-factor (parser)
   "Parse the factor (variable, number, or expression) from PARSER"
   (let ((tok (current-token parser)))
     (case (token-type tok)
+      (:plus				; +<Factor>
+       (advance-token parser)
+       (make-instance 'unary-expression
+		      :op :plus
+		      :expr (parse-factor parser)))
+      (:minus				; -<Factor>
+       (advance-token parser)
+       (make-instance 'unary-expression
+		      :op :minus
+		      :expr (parse-factor parser)))
       (:ident				; Variable
        (make-instance 'identifier
-                      :symbol (get-ident-token parser)))
+		      :symbol (get-ident-token parser)))
       (:number				; Number Literal
        (make-instance 'number-literal
-                      :value (parse-integer (token-lexeme (expect-token parser :number)))))
+		      :value (get-number-token parser)))
       (:lparen				; ( expr )
        (advance-token parser) 
        (let ((expr (parse-expression parser)))
@@ -172,7 +203,6 @@
          expr))
       (t (error "Parse Error: Unexpected token type ~A at line ~A, Column ~A.~%"
 		(token-type tok) (token-line tok) (token-column tok))))))
-
 
 (defun parse-term (parser)
   "Parse a term from the PARSER token stream,
@@ -193,9 +223,36 @@ where term = 'factor binary-op factor'"
     AST-NODE))
 
 
+(defun parse-condition (parser)
+  "Parse a logical expression in PARSER,
+where the expression is formed by 'lhs binary-op rhs'"
+  (let* ((lhs (parse-expression parser))
+	 (tok (current-token parser))
+	 (op (token-type tok)))
+    (unless (member op '(:eql :neq :lss :leq :gtr :geq))
+      (error "Parse Error: Unexpected binary-op token ~A at line ~A, Column ~A.~%"
+	     op (token-line tok) (token-column tok)))
+    (advance-token parser)
+    (let ((rhs (parse-expression parser)))
+      (make-instance 'binary-expression
+		     :left lhs :op op :right rhs))))
 
 
-    
-    
-
-	
+(defun parse-expression (parser)
+  "Parse an expression: term { (+|-) term }."
+  ;; AST-NODE is an AST subtree that accumulates structure
+  ;; as additional rhs sub-tree gets folded in.
+  ;; AST-NODE <- (binary op AST-NODE rhs)
+  ;; The AST-NODE, effectively, represents the lhs of the
+  ;; expression at each binary-op token.
+  (let ((AST-NODE (parse-term parser)))  ;; term handles *, / and unary +/- via parse-factor
+    (loop while (member (token-type (current-token parser)) '(:plus :minus))
+          do (let ((op (token-type (progn
+				     (advance-token parser)
+				     (current-token parser))))
+                   (rhs (parse-term parser)))
+               (setf AST-NODE (make-instance 'binary-expression
+                                         :left AST-NODE
+                                         :op op
+                                         :right rhs))))
+    AST-NODE))

@@ -181,12 +181,16 @@ Andy's PL/0+ to wasm compiler written in Common Lisp.
 * Stuff to Add
 + Comments
 + Function parameters
++ Local Variables
++ logic operators (and,or,xor)  
 + I/O
 + Arrays
-+ Floating point numbers
++ Types:
+  + Floats (i64)
+  + Integers (i32)
+  + Booleans 
++ for loops
++ switch statements
 + Strings
-* Log
-+ [2025-09-10 Wed] Created the project structure and github repo.
-+ [2025-09-14 Sun] Created asdf package structure.
-+ [2025-09-17 Wed] Completed Lexer.
-+ [2025-09-20 Sat] Completed AST.
+* WASM Notes
+- [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

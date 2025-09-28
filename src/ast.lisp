@@ -38,7 +38,7 @@
 
 ;;; STATEMENTS
 (defclass compound-statement (statement)
-  ((statements :initarg :stmnts :accessor cmpnd-stmnts) :initarg '()))
+  ((statements :initarg :stmnts :accessor cmpnd-stmnts :initform '())))
 
 (defclass assign-statement (statement)
   ((variable   :initarg :var  :accessor assign-var)
@@ -64,16 +64,16 @@
 
 ;;; EXPRESSIONS
 (defclass identifier (expression)
-  ((symbol :initarg symbol :accessor id-symbol)))
+  ((symbol :initarg :symbol :accessor id-symbol)))
 
 (defclass number-literal (expression)
-  ((value  :initarg value :accessor number-value)))
+  ((value  :initarg :value :accessor number-value)))
 
 (defclass binary-expression (expression)
-  ((left  :initarg left  :accessor binary-left)
-   (op    :initarg op    :accessor binary-op)
-   (right :initarg right :accessor binary-right)))
+  ((left  :initarg :left  :accessor binary-left)
+   (op    :initarg :op    :accessor binary-op)
+   (right :initarg :right :accessor binary-right)))
 
 (defclass unary-expression (expression)
-  ((op         :initarg op   :accessor unary-op)
-   (expression :initarg expr :accessor unary-expr)))
+  ((op         :initarg :op   :accessor unary-op)
+   (expression :initarg :expr :accessor unary-expr)))
