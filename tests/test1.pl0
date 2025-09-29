@@ -1,12 +1,15 @@
+// Example pl0 program
 const max = 10;
 
 var x, y, sum;
 
+// Procedure 'add' adds 2 integers
 procedure add;
 begin
    sum := x + y;
 end;
 
+// Main program block
 begin
   x := 3;
   y := 5;

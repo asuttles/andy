@@ -176,6 +176,7 @@ of the form while <condition> do <body>"
 		     :cond condition
 		     :body body))))
 
+;;; Expressions
 (defun parse-factor (parser)
   "Parse the factor (variable, number, or expression) from PARSER"
   (let ((tok (current-token parser)))
@@ -222,7 +223,6 @@ where term = 'factor binary-op factor'"
                                              :right rhs))))
     AST-NODE))
 
-
 (defun parse-condition (parser)
   "Parse a logical expression in PARSER,
 where the expression is formed by 'lhs binary-op rhs'"
@@ -237,7 +237,6 @@ where the expression is formed by 'lhs binary-op rhs'"
       (make-instance 'binary-expression
 		     :left lhs :op op :right rhs))))
 
-
 (defun parse-expression (parser)
   "Parse an expression: term { (+|-) term }."
   ;; AST-NODE is an AST subtree that accumulates structure
@@ -246,13 +245,14 @@ where the expression is formed by 'lhs binary-op rhs'"
   ;; The AST-NODE, effectively, represents the lhs of the
   ;; expression at each binary-op token.
   (let ((AST-NODE (parse-term parser)))  ;; term handles *, / and unary +/- via parse-factor
-    (loop while (member (token-type (current-token parser)) '(:plus :minus))
-          do (let ((op (token-type (prog1
-				       (current-token parser)
-				       (advance-token parser))))
-                   (rhs (parse-term parser)))
-               (setf AST-NODE (make-instance 'binary-expression
+    (loop
+      for tok = (token-type (current-token parser))
+      while (member tok '(:plus :minus))
+      do (let ((op (prog1 tok (advance-token parser)))
+               (rhs (parse-term parser)))
+           (setf AST-NODE (make-instance 'binary-expression
                                          :left AST-NODE
                                          :op op
                                          :right rhs))))
     AST-NODE))
+

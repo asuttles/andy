@@ -123,8 +123,22 @@
       (t
        (progn
 	 (format t "~%lex: ~a (~a)~%" lex typ)
-	 (error "Symbol ~a on line ~a and column ~a cannot be resolved.~%" lex line col) 1)))))
+	 (error "Scan Error: Symbol ~a on line ~a and column ~a cannot be resolved.~%" lex line col) 1)))))
       
+
+;;; Skip Comments
+(defun skip-comment (src pos len line nl-pos)
+  (let* ((x (1+ pos))
+	 (c (char src x))
+	 (col (- pos nl-pos)))
+    (if (not (char= c #\/))
+	(error "Scan Error: Symbol ~a on line ~a and column ~a cannot be resolved.~%"
+	       (char src pos) line col)
+	(loop
+	  while (and (< x len)
+		     (not (char= (char src x) #\Newline)))
+	  do (incf x)))
+    x))
 
 ;;; Tokenize the string
 (defun tokenize (src)
@@ -145,6 +159,9 @@
 	    ;; Numbers
 	    ((digit-p c)
 	     (setf pos (make-number-token src pos line nl-pos)))
+	    ;; Comments
+	    ((char= c #\/)
+	     (setf pos (skip-comment src pos len line nl-pos)))
 	    ;; Symbols
 	    ((letter-p c)
 	     (setf pos (make-symbol-token src pos line nl-pos)))
