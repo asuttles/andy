@@ -247,9 +247,9 @@ where the expression is formed by 'lhs binary-op rhs'"
   ;; expression at each binary-op token.
   (let ((AST-NODE (parse-term parser)))  ;; term handles *, / and unary +/- via parse-factor
     (loop while (member (token-type (current-token parser)) '(:plus :minus))
-          do (let ((op (token-type (progn
-				     (advance-token parser)
-				     (current-token parser))))
+          do (let ((op (token-type (prog1
+				       (current-token parser)
+				       (advance-token parser))))
                    (rhs (parse-term parser)))
                (setf AST-NODE (make-instance 'binary-expression
                                          :left AST-NODE

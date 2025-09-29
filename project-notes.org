@@ -3,7 +3,7 @@
 
 ANDY COMPILER
 
-Andy's PL/0+ to wasm compiler written in Common Lisp.
+Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Goals
 - Implement a PL/0 compiler with a real AST representation.
@@ -12,24 +12,6 @@ Andy's PL/0+ to wasm compiler written in Common Lisp.
 
 * References
 - Wirth, Niklaus. Compiler construction. Germany: Addison-Wesley, 1996.
-* Magit Common Keystrokes
-|---------------------------+--------------+----------------------------------------------------|
-| Operation                 | Keystroke(s) | Notes                                              |
-|---------------------------+--------------+----------------------------------------------------|
-| Open Magit status         | C-x g        | Opens the Magit status buffer for the current repo |
-| Stage a file              | s            | In the status buffer, put cursor on file/section   |
-| Unstage a file            | u            | Reverse stage                                      |
-| Stage a hunk / selection  | s            | When inside a hunk                                 |
-| Unstage a hunk            | u            | When inside a hunk                                 |
-| Commit staged changes     | c c          | Opens commit message buffer                        |
-| Amend last commit         | c a          | Amend previous commit                              |
-| Push                      | P u          | Push to upstream                                   |
-| Pull / fetch              | F u          | Fetch from upstream                                |
-| View log / history        | l l          | Show commit history                                |
-| Diff (unstaged changes)   | d            | View changes                                       |
-| Quit / close Magit buffer | q            | Exit status buffer                                 |
-|---------------------------+--------------+----------------------------------------------------|
-
 * Keywords
 - const
 - var
@@ -114,7 +96,7 @@ Andy's PL/0+ to wasm compiler written in Common Lisp.
   - Program, Block, Statement, Expression nodes.
 - Benefit: easier to expand to floats, strings, or richer type system later.
 
-*** TODO Step 4: Parser (recursive descent)
+*** DONE Step 4: Parser (recursive descent)
 - Functions mirror grammar:
   - =parse-program=
   - =parse-block=
@@ -179,16 +161,19 @@ Andy's PL/0+ to wasm compiler written in Common Lisp.
 - Begin by restricting nested procedures for simpler mapping.
 
 * Stuff to Add
++ Pretty-printer
++ Command line switches
+  - debug, target, listing, assembler
 + Comments
 + Function parameters
-+ Local Variables
-+ logic operators (and,or,xor)  
-+ I/O
-+ Arrays
 + Types:
   + Floats (i64)
   + Integers (i32)
   + Booleans 
++ Local Variables
++ logic operators (and,or,xor)  
++ I/O
++ Arrays
 + for loops
 + switch statements
 + Strings
