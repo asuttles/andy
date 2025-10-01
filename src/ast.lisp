@@ -21,15 +21,17 @@
   ((constants  :initarg :consts :accessor block-consts :initform '())
    (variables  :initarg :vars   :accessor block-vars   :initform '())
    (procedures :initarg :procs  :accessor block-procs  :initform '())
-   (body       :initarg :body  :accessor block-body    :initform '())))
+   (body       :initarg :body   :accessor block-body    :initform '())))
 
 ;;; Declarations
 (defclass constant-declaration (ast-node)
   ((symbol  :initarg :symbol :accessor const-symbol)
-   (value   :initarg :value  :accessor const-value)))
+   (value   :initarg :value  :accessor const-value)
+   (type    :initarg :type   :accessor const-type)))
 
 (defclass variable-declaration (ast-node)
-  ((symbol  :initarg :symbol :accessor var-symbol)))
+  ((symbol :initarg :symbol :accessor var-symbol)
+   (type   :initarg :type   :accessor var-type)))
 
 (defclass procedure-declaration (ast-node)
   ((symbol :initarg :symbol :accessor proc-symbol)
@@ -67,7 +69,8 @@
   ((symbol :initarg :symbol :accessor id-symbol)))
 
 (defclass number-literal (expression)
-  ((value  :initarg :value :accessor number-value)))
+  ((value  :initarg :value :accessor number-value)
+   (type   :initarg :type  :accessor number-type)))
 
 (defclass binary-expression (expression)
   ((left  :initarg :left  :accessor binary-left)

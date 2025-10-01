@@ -1,7 +1,7 @@
 // Example pl0 program
-const max = 10;
+const int max = 10;
 
-var x, y, sum;
+int x, y, sum;
 
 // Procedure 'add' adds 2 integers
 procedure add;

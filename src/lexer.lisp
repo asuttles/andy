@@ -24,7 +24,7 @@
 (defconstant +keywords+
 ;;;(defparameter +keywords+
   '(("const"     . :const)
-    ("var"       . :var)
+    ("int"       . :int)
     ("procedure" . :procedure)
     ("call"      . :call)
     ("begin"     . :begin)

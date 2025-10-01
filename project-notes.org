@@ -164,7 +164,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Pretty-printer
 + Command line switches
   - debug, target, listing, assembler
-+ Comments
++ DONE - Comments
 + Function parameters
 + Types:
   + Floats (i64)

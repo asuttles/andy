@@ -68,12 +68,12 @@
 ;;; Block
 (defun parse-block (parser)
   (let ((consts (parse-constant-declarations parser))
-        (vars   (parse-variable-declarations parser))
+        (ints   (parse-integer-declarations parser))
         (procs  (parse-procedure-declarations parser))
         (body   (parse-statements parser)))
     (make-instance 'program-block
                    :consts consts
-                   :vars vars
+                   :vars ints
                    :procs procs
                    :body body)))
 
@@ -83,23 +83,35 @@
     (advance-token parser)
     (let ((consts nil))
       (loop
-        (let ((name (get-ident-token parser)))
-          (expect-token parser :eql)
-          (let ((num (get-number-token parser)))
-            (push (list name num) consts)))
+	    (let* ((this-token (current-token parser))
+		   (type (token-type this-token)))
+	      (unless (member type '(:int :float))
+		(error "Parse Error: Unknown type ~A at line ~A, Column ~A~%"
+		       type (token-line this-token) (token-column this-token)))
+	      (advance-token parser)
+              (let ((name (get-ident-token parser)))
+		(expect-token parser :eql)
+		(let ((num (get-number-token parser)))
+		  (push (make-instance 'constant-declaration
+				       :symbol name
+				       :value num
+				       :type type)
+			consts))))
         (if (match-token parser :comma)
-            (advance-token parser)
-            (return (progn
-                      (expect-token parser :semicolon)
-                      (nreverse consts))))))))
+	    (advance-token parser)
+	    (return (progn
+		      (expect-token parser :semicolon)
+		      (nreverse consts))))))))
 
-;;; Block - Variables
-(defun parse-variable-declarations (parser)
-  (when (eq (token-type (current-token parser)) :var)
+;;; Block - Variables - Integers
+(defun parse-integer-declarations (parser)
+  (when (eq (token-type (current-token parser)) :int)
     (advance-token parser)
     (let ((vars nil))
       (loop
-	(push (get-ident-token parser) vars)
+	(push (make-instance 'variable-declaration
+			     :symbol (get-ident-token parser)
+			     :type :int) vars)
 	(if (match-token parser :comma)
 	    (advance-token parser)
 	    (return (progn
@@ -196,7 +208,8 @@ of the form while <condition> do <body>"
 		      :symbol (get-ident-token parser)))
       (:number				; Number Literal
        (make-instance 'number-literal
-		      :value (get-number-token parser)))
+		      :value (get-number-token parser)
+		      :type :int))
       (:lparen				; ( expr )
        (advance-token parser) 
        (let ((expr (parse-expression parser)))
