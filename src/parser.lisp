@@ -128,7 +128,10 @@
                 (expect-token parser :semicolon)
                 (let ((body (parse-block parser)))
                   (expect-token parser :semicolon)
-                  (push (cons name body) procs)))))
+		  (push (make-instance 'procedure-declaration
+				       :symbol name
+				       :body body)
+			procs)))))
    (nreverse procs)))
 
 

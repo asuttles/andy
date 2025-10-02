@@ -67,10 +67,71 @@ Raises an error if the name is already defined in this scope."
     (let ((sym (find name scope :key #'abstract-symbol-name :test #'equal)))
       (when sym (return sym)))))
 
+;;; -----------------------------------------------------------------
+;;; Perform semantic Analysis of AST and Build Symbol Table
+;;; -----------------------------------------------------------------
+
+;;; Constant Analysis
+(defun analyze-constant-decl (c)
+  "C is a constant-declaration AST node with slots: const-symbol, const-value, const-type"
+  (let ((name (const-symbol c))
+        (val (const-value c))
+        (type (const-type c)))
+    (unless (eq type :int)
+      (error "Semantic Error: Unrecognized type (~A) for const: ~A~%" type, name))
+    (let ((sym (make-abstract-symbol :name name :kind :const :type type :value val :node c)))
+      (insert-symbol sym))))
+
+;;; Variable Analysis
+(defun analyze-variable-decl (v)
+  "V is variable-declaration node with var-symbol and var-type"
+  (let ((name (var-symbol v)) (type (var-type v)))
+    (let ((sym (make-abstract-symbol :name name :kind :var :type type :value nil :node v)))
+      (insert-symbol sym))))
 
 
+
+;;; Block Analysis
+(defun analyze-block (block-node)
+  "Analyze constants, variables, procedures and body."
+  
+  ;; CONSTANTS
+  (dolist (c (block-consts block-node))
+    (analyze-constant-decl c))
+
+  ;; VARIABLES
+  (dolist (v (block-vars block-node)) 
+    (analyze-variable-decl v))
+
+  ;; PROCEDURES -- two pass:
+
+  ;; Insert procedure name symbols into current scope
+  (dolist (p (block-procs block-node))
+    (let* ((name (proc-symbol p))
+           (sym (make-symbol-entry name :procedure)))
+      (add-symbol sym)))
+
+  ;; Now analyze procedure bodies
+  ;; With symbol in local scope, recursion is possible
+  (dolist (p (block-procs block-node))
+    (analyze-procedure p))
+
+  ;; Code BODY (begin ... end)
+  (analyze-statement (block-body block-node)))
+
+
+;;; Program Analysis
+(defun analyze-program (prog-node)
+  (let ((block (program-block prog-node)))
+    (analyze-block block)))
 
 ;;; Perform Symantic Analysis and Build Symbol Table
-(defun analyze (ast)
-  ast)
+(defun analyze-ast (ast)
+  "Semantic analysis entry point."
+  (setq *symbol-table* nil)
+  (enter-scope)		
+  (analyze-program program-node)	
+  (leave-scope))
+
+
 

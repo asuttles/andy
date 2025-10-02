@@ -15,20 +15,29 @@ It has:
 
 It is deliberately minimal, making it ideal for educational compiler projects.
 
+## Updates
+
+- The language has been updated with comments (//) and types.
+
 ### Example Program
 
 ```pl0
-const m = 7;
-var x, y;
+// Example pl0 program
+const int max = 10;
 
+int x, y, sum;
+
+// Procedure 'add' adds 2 integers
+procedure add;
 begin
-  x := 1;
-  y := 1;
-  while y < m do
-    begin
-      x := x + y;
-      y := y + 1
-    end
+   sum := x + y;
+end;
+
+// Main program block
+begin
+  x := 3;
+  y := 5;
+  call add;
 end.
 ```
 
@@ -67,11 +76,6 @@ cd pl0-compiler
 (ql:quickload :pl0-compiler)
 (pl0-compiler:parse-file "tests/example.pl0")
 ```
-
-## Roadmap
-
-- Implement basic optimizations (constant folding, dead code elimination)
-- Extend the language (I/O, strings, arrays, etc.)
 
 ## References
 

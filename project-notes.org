@@ -23,7 +23,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 - then
 - while
 - do
-* PL/0 EBNF
+* Original PL/0 EBNF
 #+begin_src pascal
 
   program   = block "." .
@@ -56,6 +56,59 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   digit  = "0" | "1" | ... | "9" .
     
 #+end_src
+* Updated PL/0+ EBNF
+(* --- Lexical Elements --- *)
+letter    = "A" | ... | "Z" | "a" | ... | "z" ;
+digit     = "0" | ... | "9" ;
+identifier= letter { letter | digit } ;
+number    = digit { digit } ;
+
+comment   = "//" { any-character - newline } newline ;
+
+(* --- Program --- *)
+program   = block "." ;
+
+block     = [ constant-declarations ]
+            { variable-declaration }
+            { procedure-declaration }
+            statement ;
+
+(* --- Declarations --- *)
+constant-declarations = "const" typed-const { "," typed-const } ";" ;
+typed-const           = type identifier "=" literal ;
+
+variable-declaration  = type identifier { "," identifier } ";" ;
+type                  = "int" | "float" | "bool" | "string" ;
+	    
+procedure-declaration = "procedure" identifier ";" block ";" ;
+
+(* --- Statements --- *)
+statement = assignment
+          | call
+          | compound-statement
+          | if-statement
+          | while-statement
+          | ε ;
+
+assignment = identifier ":=" expression ";" ;
+call       = "call" identifier ";" ;
+
+compound-statement = "begin" statement { statement } "end" ;
+
+if-statement = "if" condition "then" statement ;
+while-statement = "while" condition "do" statement ;
+
+(* --- Conditions --- *)
+condition = expression relop expression ;
+relop     = "=" | "≠" | "<" | "≤" | ">" | "≥" ;
+
+(* --- Expressions --- *)
+expression = term { ("+" | "-") term } ;
+term       = factor { ("*" | "/") factor } ;
+factor     = identifier
+           | number
+           | "(" expression ")"
+           | ("+" | "-") factor ;   (* unary +/- *)
 * Roadmap
 *** DONE Step 0: Project layout
 - Create directory structure:

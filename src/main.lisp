@@ -7,8 +7,10 @@
 (defun compile-source (filename)
   (let* ((source  (read-file filename))
          (tokens  (tokenize source))
-         (ast     (analyze (parse tokens))))
+         (ast     (parse tokens)))
+    (if (analyze-ast ast)
+	(format t "Semantic checks passed.~%")
+	(format t "Semantic checks failed.~%"))
     (emit-wasm ast))
   (format t "~%Compilation complete.~%"))
-
 

@@ -68,6 +68,11 @@
 (defclass identifier (expression)
   ((symbol :initarg :symbol :accessor id-symbol)))
 
+(defclass identifier (expression)
+  ((symbol  :initarg :symbol  :accessor id-symbol)
+   ;; Binding slot contains pointer to objects in symbol table
+   (binding :initarg :binding :accessor id-binding :initform nil)))
+
 (defclass number-literal (expression)
   ((value  :initarg :value :accessor number-value)
    (type   :initarg :type  :accessor number-type)))
