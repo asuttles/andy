@@ -10,7 +10,9 @@
 
 (defclass statement (ast-node) ())
 
-(defclass expression (ast-node) ())
+(defclass expression (ast-node)
+  ((type :initarg :type :accessor expr-type)))
+  
 
 
 ;;; PROGRAM Structure
@@ -66,21 +68,22 @@
 
 ;;; EXPRESSIONS
 (defclass identifier (expression)
-  ((symbol :initarg :symbol :accessor id-symbol)))
-
-(defclass identifier (expression)
   ((symbol  :initarg :symbol  :accessor id-symbol)
    ;; Binding slot contains pointer to objects in symbol table
    (binding :initarg :binding :accessor id-binding :initform nil)))
 
 (defclass number-literal (expression)
-  ((value  :initarg :value :accessor number-value)
-   (type   :initarg :type  :accessor number-type)))
+  ((value  :initarg :value :accessor number-value)))
+
+(defclass conditional-expression (expression)
+  ((lhs :initarg :lhs :accessor cond-lhs)
+   (op  :initarg :op  :accessor cond-op)
+   (rhs :initarg :rhs :accessor cond-rhs)))
 
 (defclass binary-expression (expression)
-  ((left  :initarg :left  :accessor binary-left)
-   (op    :initarg :op    :accessor binary-op)
-   (right :initarg :right :accessor binary-right)))
+  ((lhs :initarg :lhs :accessor binary-lhs)
+   (op  :initarg :op  :accessor binary-op)
+   (rhs :initarg :rhs :accessor binary-rhs)))
 
 (defclass unary-expression (expression)
   ((op         :initarg :op   :accessor unary-op)

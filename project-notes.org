@@ -57,58 +57,61 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
     
 #+end_src
 * Updated PL/0+ EBNF
-(* --- Lexical Elements --- *)
-letter    = "A" | ... | "Z" | "a" | ... | "z" ;
-digit     = "0" | ... | "9" ;
-identifier= letter { letter | digit } ;
-number    = digit { digit } ;
+#+begin_src pascal
 
-comment   = "//" { any-character - newline } newline ;
+  (* --- Lexical Elements --- *)
+  letter    = "A" | ... | "Z" | "a" | ... | "z" ;
+  digit     = "0" | ... | "9" ;
+  identifier= letter { letter | digit } ;
+  number    = digit { digit } ;
 
-(* --- Program --- *)
-program   = block "." ;
+  comment   = "//" { any-character - newline } newline ;
 
-block     = [ constant-declarations ]
-            { variable-declaration }
-            { procedure-declaration }
-            statement ;
+  (* --- Program --- *)
+  program   = block "." ;
 
-(* --- Declarations --- *)
-constant-declarations = "const" typed-const { "," typed-const } ";" ;
-typed-const           = type identifier "=" literal ;
+  block     = [ constant-declarations ]
+              { variable-declaration }
+              { procedure-declaration }
+              statement ;
 
-variable-declaration  = type identifier { "," identifier } ";" ;
-type                  = "int" | "float" | "bool" | "string" ;
-	    
-procedure-declaration = "procedure" identifier ";" block ";" ;
+  (* --- Declarations --- *)
+  constant-declarations = "const" typed-const { "," typed-const } ";" ;
+  typed-const           = type identifier "=" literal ;
 
-(* --- Statements --- *)
-statement = assignment
-          | call
-          | compound-statement
-          | if-statement
-          | while-statement
-          | ε ;
+  variable-declaration  = type identifier { "," identifier } ";" ;
+  type                  = "int" | "float" | "bool" | "string" ;
+  	    
+  procedure-declaration = "procedure" identifier ";" block ";" ;
 
-assignment = identifier ":=" expression ";" ;
-call       = "call" identifier ";" ;
+  (* --- Statements --- *)
+  statement = assignment
+            | call
+            | compound-statement
+            | if-statement
+            | while-statement
+            | ε ;
 
-compound-statement = "begin" statement { statement } "end" ;
+  assignment = identifier ":=" expression ";" ;
+  call       = "call" identifier ";" ;
 
-if-statement = "if" condition "then" statement ;
-while-statement = "while" condition "do" statement ;
+  compound-statement = "begin" statement { statement } "end" ;
 
-(* --- Conditions --- *)
-condition = expression relop expression ;
-relop     = "=" | "≠" | "<" | "≤" | ">" | "≥" ;
+  if-statement = "if" condition "then" statement ;
+  while-statement = "while" condition "do" statement ;
 
-(* --- Expressions --- *)
-expression = term { ("+" | "-") term } ;
-term       = factor { ("*" | "/") factor } ;
-factor     = identifier
-           | number
-           | "(" expression ")"
-           | ("+" | "-") factor ;   (* unary +/- *)
+  (* --- Conditions --- *)
+  condition = expression relop expression ;
+  relop     = "=" | "≠" | "<" | "≤" | ">" | "≥" ;
+
+  (* --- Expressions --- *)
+  expression = term { ("+" | "-") term } ;
+  term       = factor { ("*" | "/") factor } ;
+  factor     = identifier
+             | number
+             | "(" expression ")"
+             | ("+" | "-") factor ;   (* unary +/- *)
+#+end_src
 * Roadmap
 *** DONE Step 0: Project layout
 - Create directory structure:

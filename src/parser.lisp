@@ -211,8 +211,7 @@ of the form while <condition> do <body>"
 		      :symbol (get-ident-token parser)))
       (:number				; Number Literal
        (make-instance 'number-literal
-		      :value (get-number-token parser)
-		      :type :int))
+		      :value (get-number-token parser)))
       (:lparen				; ( expr )
        (advance-token parser) 
        (let ((expr (parse-expression parser)))
@@ -234,9 +233,9 @@ where term = 'factor binary-op factor'"
           do (let ((op (token-type (advance-token parser)))
                    (rhs (parse-factor parser)))
                (setf AST-NODE (make-instance 'binary-expression
-                                             :left AST-NODE
+                                             :lhs AST-NODE
                                              :op op
-                                             :right rhs))))
+                                             :rhs rhs))))
     AST-NODE))
 
 (defun parse-condition (parser)
@@ -250,8 +249,8 @@ where the expression is formed by 'lhs binary-op rhs'"
 	     op (token-line tok) (token-column tok)))
     (advance-token parser)
     (let ((rhs (parse-expression parser)))
-      (make-instance 'binary-expression
-		     :left lhs :op op :right rhs))))
+      (make-instance 'conditional-expression
+		     :lhs lhs :op op :rhs rhs))))
 
 (defun parse-expression (parser)
   "Parse an expression: term { (+|-) term }."
@@ -267,8 +266,8 @@ where the expression is formed by 'lhs binary-op rhs'"
       do (let ((op (prog1 tok (advance-token parser)))
                (rhs (parse-term parser)))
            (setf AST-NODE (make-instance 'binary-expression
-                                         :left AST-NODE
+                                         :lhs AST-NODE
                                          :op op
-                                         :right rhs))))
+                                         :rhs rhs))))
     AST-NODE))
 
