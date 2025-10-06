@@ -54,7 +54,7 @@
 
 ;;; Slurp source file into a string
 (defun read-file (filename)
-  (format t "Reading file: ~A~%~%" filename)
+  (format t "Reading file: ~A...~%" filename)
   (handler-case (uiop:read-file-string filename)
     (file-error (e)
       (format t "~A~%" e) "")))
@@ -142,7 +142,7 @@
 
 ;;; Tokenize the string
 (defun tokenize (src)
-  (format t "Scanning Source File...~%~%")
+  (format t "Scanning Source File...~%")
   ;; Tokenizer State
   (let ((len (length src))
 	(pos 0)

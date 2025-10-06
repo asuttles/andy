@@ -1,8 +1,3 @@
-;;; TODO
-;;; Write analyze-assignment and analyze-call
-;;; Finish up analyze-condition and test
-
-
 (defpackage :andy.analyzer
   (:use :cl)
   (:export
@@ -72,9 +67,74 @@ Raises an error if the name is already defined in this scope."
     (let ((sym (find name scope :key #'abstract-symbol-name :test #'equal)))
       (when sym (return sym)))))
 
+
 ;;; -----------------------------------------------------------------
 ;;; Perform semantic Analysis of AST and Build Symbol Table
+;;;   - Expressions
+;;;   - Statements
+;;;   - Program/Block
 ;;; -----------------------------------------------------------------
+
+;;; ─── Expression Analysis ─────────────────────────────────────────
+
+;;; Number, Identifier, and Expressions
+(defun analyze-expression (e)
+  (cond
+    ;; Number Literal
+    ((typep e 'number-literal)
+     (expr-type e))
+    ;; Identifier
+    ((typep e 'identifier)
+     (let ((name (id-symbol e)))
+       (let ((sym (lookup-symbol name)))
+         (unless sym
+	   (error "Semantic Error: Use of undeclared identifier ~A" name))
+         ;; Annotate AST identifier node with binding
+         (setf (id-binding e) sym)
+         (abstract-symbol-type sym))))
+    ;; Binary Expression
+    ((typep e 'binary-expression)
+     (let ((ltype (analyze-expression (binary-lhs e)))
+           (rtype (analyze-expression (binary-rhs e)))
+           (op (binary-op e)))
+       ;; arithmetic ops require numeric types (int for now)
+       (cond
+         ((member op '(:plus :minus :times :divide))
+          (unless (and (eq ltype :int) (eq rtype :int))
+            (error "Arithmetic operator ~A requires integers, got ~A and ~A" op ltype rtype))
+          :int)
+         (t (error "Semantic Error: Unknown binary op ~A" op)))))
+    ;; Unary Expression
+    ((typep e 'unary-expression)
+     (let ((typ (analyze-expression (unary-expr e)))
+           (op (unary-op e)))
+       (cond
+         ((eq op :minus)
+          (unless (eq typ :int) (error "Unary - requires integer"))
+          :int)
+         ((eq op :plus)
+          typ)
+         (t (error "Unknown unary op ~A" op)))))
+    (t (error "Unknown expression node: ~A" (class-of e)))))
+
+;;; Analyze Conditional Expressions
+(defun analyze-condition (c)
+  "Analyze a logical condition expression AST node."
+  ;; conditional expression: expr1 <op> expr2
+  ;; analyze sub-expressions
+  (let ((op  (cond-op c)))
+    ;; Logic Operator Check
+    (unless (member op '(:eql :neq :lss :leq :gtr :geq))
+      (error "Semantic Error: Conditional expression has unknown operator: ~A" op))
+    ;; Type Checking
+    (let ((ltype (analyze-expression (cond-lhs c)))
+	  (rtype (analyze-expression (cond-rhs c))))
+      (unless (eq ltype rtype)
+	(error "Type mismatch for conditional expression ~A ~A ~A"
+	       ltype op rtype))
+      :int)))
+
+;;; ─── Statement Analysis ──────────────────────────────────────────-
 
 ;;; Constant Analysis
 (defun analyze-constant-decl (c)
@@ -108,26 +168,32 @@ Raises an error if the name is already defined in this scope."
       (analyze-block (proc-body p))
       (leave-scope))))
 
-;;;     (analyze-assignment stmt))
-;;;     (analyze-call stmt))
+;;;  Assignment Statements
+(defun analyze-assignment (a)
+  (let ((var-name (assign-var a)))
+    (let ((sym (lookup-symbol var-name)))
+      (unless sym
+	(error "Semantic Error: Assignment to undeclared identifier ~A" var-name))
+      (when (eq (abstract-symbol-kind sym) :const)
+        (error "Semantic Error: Assignment to constant ~A" var-name))
+      ;; Type-check RHS against var type
+      (let ((rhs-type (analyze-expression (assign-expr a)))
+	    (lhs-type (abstract-symbol-type sym)))
+        (unless (eq rhs-type lhs-type)
+          (error "Semantic Error: Type mismatch assigning to ~A: got ~A, expected ~A"
+                 var-name rhs-type lhs-type))))))
 
+;;; Procedure Calls
+(defun analyze-call (call)
+  (let ((name (call-proc-name call)))
+    (let ((sym (lookup-symbol name)))
+      (unless sym (error "Semantic Error: Call to undeclared procedure ~A~%" name))
+      (unless (eq (abstract-symbol-kind sym) :procedure)
+	(error "Semantic Error: Call to a symbol (~A) that is not a procedure~%" name))
+      ;; NOTE:
+      ;; Check Procedure Arguments HERE
+      )))
 
-;;; Condition Analysis
-(defun analyze-condition (c)
-  "Analyze a logical condition expression AST node."
-  ;; conditional expression: expr1 <op> expr2
-  ;; analyze sub-expressions
-  (let ((op (cond-op c)))
-    (unless (member op '(:eql :neq :lss :leq :gtr :geq))
-      (error "Semantic Error: Conditional expression has unknown operator: ~%" op))
-    (analyze-expression (cond-lhs c))
-    (analyze-expression (cond-rhs c)))
-  ;; type checking
-  (unless (eq (expression-type (condition-left node))
-              (expression-type (condition-right node)))
-    (error "Type mismatch in condition"))
-
-  
 ;;; Statement Analysis
 (defun analyze-statement (stmt)
   (cond
@@ -135,30 +201,33 @@ Raises an error if the name is already defined in this scope."
     ((typep stmt 'compound-statement)
      (dolist (s (cmpnd-stmnts stmt))
        (analyze-statement s)))
+
     ;; Assign Statement
     ((typep stmt 'assign-statement)
-     ;;(analyze-assignment stmt)
-     (print "Assignment"))
+     (analyze-assignment stmt))
+
     ;; Procedure Call Statement
     ((typep stmt 'call-statement)
-     ;;(analyze-call stmt))
-     (print "Call Statement"))
+     (analyze-call stmt))
+
     ;; If Statement
     ((typep stmt 'if-statement)
      (let ((condition (if-cond stmt)))
-       ;;(analyze-condition condition)
-       (print condition)
+       (analyze-condition condition)
        (analyze-statement (if-conseq stmt))))
+
     ;; While Statement
     ((typep stmt 'while-statement)
      (let ((condition (while-cond stmt)))
-       ;;(analyze-condition condition)
-       (print condition)
+       (analyze-condition condition)
        (analyze-statement (while-body stmt))))
+
     ;; Ill-formed Statement
     (t
      (error "Semantic Error: Unknown statement type: ~A" (class-of stmt)))))
 
+
+;;; ─── Program Analysis ────────────────────────────────────────────
 
 ;;; Block Analysis
 (defun analyze-block (block-node)

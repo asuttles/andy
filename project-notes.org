@@ -163,43 +163,19 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   - =parse-factor=
 - For now, parser builds AST instead of directly emitting code.
 
-*** TODO Step 5: Symbol table
+*** DONE Step 5: Symbol table
 - Maintain a table with entries:
   | name | kind (const/var/proc) | value | level | address |
 - Functions: =enter-const=, =enter-var=, =enter-proc=, =find-symbol=.
 
+*** DONE Step 6: Semantic Analysis
 *** TODO Step 6: Code emission
-- Instruction format: (OP L M).
-- Opcodes:
-  - LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
-- OPR subcodes: RET, ADD, SUB, MUL, DIV, etc.
-- Implement =emit= function to build code vector.
-
-*** TODO Step 7: Virtual Machine
-- State: pc, bp, sp, stack array.
-- Implement =base= function for static link resolution.
-- =run-vm= executes emitted code.
-- First backend for quick testing.
-
-*** TODO Step 8: Codegen from AST
-- Walk AST and emit stack-machine instructions.
-- Examples:
-  - Assignment: generate expr code, then STO.
-  - If: condition + JPC + stmt + backpatch.
-  - While: loop label, cond, body, jumps.
-
+- Map stack instructions to WASM text (=.wat=).
+- Strategy A: compile each PL/0 procedure to a WASM function with locals.
+- Strategy B: direct WASM emission with structured control flow.
+- Begin by restricting nested procedures for simpler mapping.
 *** TODO Step 9: Testing plan
-- Minimal program: =begin end.=
-- Assignments and arithmetic.
-- Procedure call.
-- Factorial program.
-- Write harness in =tests/= that:
-  - Reads example file.
-  - Tokenizes, parses, builds AST.
-  - Emits and prints code.
-  - Runs VM.
-
-*** TODO Step 10: Error handling
+*** TODO Step 10: Improved Error handling
 - Lexer tracks positions.
 - Parser raises syntax errors with expected vs. actual token.
 
@@ -210,12 +186,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 - Strings and simple heap management.
 - Arrays and records.
 
-*** TODO Step 12: WASM backend
-- Map stack instructions to WASM text (=.wat=).
-- Strategy A: compile each PL/0 procedure to a WASM function with locals.
-- Strategy B: direct WASM emission with structured control flow.
-- Begin by restricting nested procedures for simpler mapping.
-
 * Stuff to Add
 + Pretty-printer
 + Command line switches
@@ -225,13 +195,19 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Types:
   + Floats (i64)
   + Integers (i32)
-  + Booleans 
-+ Local Variables
-+ logic operators (and,or,xor)  
-+ I/O
+  + +Booleans+
+  + Strings
++ elseif
++ logic operators (and,or,xor)
+  where, 0 = false; everything else = true 
++ I/O (read, write)
 + Arrays
-+ for loops
-+ switch statements
-+ Strings
++ for loops?  (maybe as a macro?)
++ switch statements (maybe as a macro?)
+** Improved Error Messages
+   1) Create a location struct with line/column properties
+   2) Add location slot to the AST nodes
+   3) Populate the slot when creating AST nodes in the parser
+   4) Then the analyzer can access locations when raising errors.
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

@@ -12,7 +12,6 @@
 
 (defclass expression (ast-node)
   ((type :initarg :type :accessor expr-type)))
-  
 
 
 ;;; PROGRAM Structure

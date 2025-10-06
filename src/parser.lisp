@@ -49,6 +49,9 @@
   (let ((tok (expect-token parser :number)))
     (parse-integer (token-lexeme tok))))
 
+(defun get-number-type (token)
+  ;; Function Stub
+  (if token :int nil))
 
 ;;; Parse the token stream...
 (defun parse (tokens)
@@ -211,7 +214,8 @@ of the form while <condition> do <body>"
 		      :symbol (get-ident-token parser)))
       (:number				; Number Literal
        (make-instance 'number-literal
-		      :value (get-number-token parser)))
+		      :value (get-number-token parser)
+		      :type  (get-number-type  tok)))
       (:lparen				; ( expr )
        (advance-token parser) 
        (let ((expr (parse-expression parser)))
