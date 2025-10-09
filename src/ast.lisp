@@ -1,9 +1,44 @@
 (defpackage :andy.ast
   (:use :cl)
-  (:export :generate-ast))
+  (:export
+   ;; Base classes
+   :ast-node :statement :expression
+
+   ;; Program structure
+   :program :program-block
+
+   ;; Declarations
+   :constant-declaration :variable-declaration :procedure-declaration
+
+   ;; Statements
+   :compound-statement :assign-statement :call-statement
+   :if-statement :while-statement :read-statement :write-statement
+
+   ;; Expressions
+   :identifier :number-literal :conditional-expression
+   :binary-expression :unary-expression
+
+   ;; Accessors (slot readers)
+   :expr-type
+   :program-block
+   :block-consts :block-vars :block-procs :block-body
+   :const-symbol :const-value :const-type
+   :var-symbol :var-type
+   :proc-symbol :proc-body
+   :cmpnd-stmnts
+   :assign-var :assign-expr
+   :call-proc-name
+   :if-cond :if-conseq
+   :while-cond :while-body
+   :read-var
+   :write-expr
+   :id-symbol :id-binding
+   :number-value
+   :cond-lhs :cond-op :cond-rhs
+   :binary-lhs :binary-op :binary-rhs
+   :unary-op :unary-expr))
 
 (in-package :andy.ast)
-
 
 ;;; Base Classes for AST Nodes
 (defclass ast-node () ())
@@ -22,7 +57,7 @@
   ((constants  :initarg :consts :accessor block-consts :initform '())
    (variables  :initarg :vars   :accessor block-vars   :initform '())
    (procedures :initarg :procs  :accessor block-procs  :initform '())
-   (body       :initarg :body   :accessor block-body    :initform '())))
+   (body       :initarg :body   :accessor block-body   :initform '())))
 
 ;;; Declarations
 (defclass constant-declaration (ast-node)

@@ -9,9 +9,9 @@
   ((:module "src"
 	    :components
 	    ((:file "lexer")
-	     (:file "parser")
 	     (:file "ast")
-	     (:file "ir")
+	     (:file "parser")
+	     (:file "analyzer")
 	     (:file "wasm")
 	     (:file "main")))))
 

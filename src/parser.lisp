@@ -1,5 +1,5 @@
 (defpackage :andy.parser
-  (:use :cl)
+  (:use :cl :andy.ast)
   (:export :parse)
   (:import-from :andy.lexer
    :token-type :token-lexeme
@@ -70,6 +70,7 @@
 
 ;;; Block
 (defun parse-block (parser)
+  (format t "DEBUG: parsing block, next token is: ~A~%" (token-type (current-token parser)))
   (let ((consts (parse-constant-declarations parser))
         (ints   (parse-integer-declarations parser))
         (procs  (parse-procedure-declarations parser))
@@ -95,7 +96,7 @@
               (let ((name (get-ident-token parser)))
 		(expect-token parser :eql)
 		(let ((num (get-number-token parser)))
-		  (push (make-instance 'constant-declaration
+		  (push (make-instance 'andy.ast:constant-declaration
 				       :symbol name
 				       :value num
 				       :type type)
@@ -128,7 +129,10 @@
          do (progn
               (advance-token parser)
               (let ((name (get-ident-token parser)))
+		(format t "DEBUG: Next tok after procedure ~A is ~A"
+			name (current-token parser))
                 (expect-token parser :semicolon)
+		(format t "DEBUG: Next tok within procedure is: ~A" (current-token parser))
                 (let ((body (parse-block parser)))
                   (expect-token parser :semicolon)
 		  (push (make-instance 'procedure-declaration

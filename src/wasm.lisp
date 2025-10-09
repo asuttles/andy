@@ -1,5 +1,5 @@
 (defpackage :andy.wasm
-  (:use :cl)
+  (:use :cl :andy.ast)
   (:export :emit-wasm))
 
 (in-package :andy.wasm)
@@ -50,10 +50,35 @@
     (t nil)))
 
 
+(defun emit-procedure-constants (consts)
+  (when consts
+    (dolist (c consts)
+      (let* ((sym  (const-symbol c))
+	     (ptyp (const-type   c))
+	     (val  (const-value  c))
+	     (wtyp (get-wasm-type ptyp)))
+	(format *stream* "   (local $~A ~A)~%" sym wtyp)
+	(format *stream* "   ~A.const ~A~%" wtyp val)
+	(format *stream* "   local.set $~A~%" sym)))))
+
+(defun emit-procedure-variables (vars)
+  (when vars
+    (dolist (v vars)
+      (let* ((sym  (var-symbol v))
+	     (ptyp (var-type   v))
+	     (wtyp (get-wasm-type ptyp)))
+	(format *stream* "   (local $~A ~A)~%" sym wtyp)))))
+				 
 (defun emit-procedures (procs)
   (dolist (p procs)
-    (format *stream* "~%  (func $~A~%   nop~%  )~%"
-	    (proc-symbol p))))
+    (format *stream* "~%  (func $~A~%"
+	    (proc-symbol p))
+    (let ((b (proc-body p)))
+      (print (block-vars b))
+      (emit-procedure-constants (block-consts b))
+      (emit-procedure-variables (block-vars   b)))
+    (format *stream* "   )~%")))
+
   
 (defun emit-end-program ()
   (format *stream* ")~%"))

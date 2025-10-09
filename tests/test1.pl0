@@ -5,7 +5,9 @@ int x, y, sum;
 
 // Procedure 'add' adds 2 integers
 procedure add;
+int multy;
 begin
+   multy := 7;
    sum := x + y;
 end;
 

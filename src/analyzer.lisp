@@ -1,5 +1,5 @@
 (defpackage :andy.analyzer
-  (:use :cl)
+  (:use :cl :andy.ast)
   (:export
    :analyze-ast))
 
@@ -256,7 +256,7 @@ Raises an error if the name is already defined in this scope."
 
   ;; Code BODY (begin ... end)
   (analyze-statement (block-body block-node)))
-))
+
 
 ;;; Program Analysis
 (defun analyze-program (prog-node)
