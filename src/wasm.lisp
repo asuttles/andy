@@ -124,7 +124,10 @@
        (emit-expression rhs-expr)
        (format *stream* "   ~A.set $~A~%"
 	       (if (eq lhs-scope :local) "local" "global")
-	       (id-symbol lhs-id))))))
+	       (id-symbol lhs-id))))
+    ;; Call Procedure Statement
+    ((typep stmnt-node 'call-statement)
+     (format *stream* "   call $~A~%" (call-proc-name stmnt-node)))))
 
 (defun emit-procedures (procs)
   (dolist (p procs)

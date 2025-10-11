@@ -76,6 +76,8 @@ cd pl0-compiler
 (ql:quickload :pl0-compiler)
 (pl0-compiler:parse-file "tests/example.pl0")
 ```
+## Example Output
+![PL/0+ -> WAT](./img/screenshot1.png "Example Compilation")
 
 ## References
 
