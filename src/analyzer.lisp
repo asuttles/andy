@@ -67,6 +67,10 @@ Raises an error if the name is already defined in this scope."
     (let ((sym (find name scope :key #'abstract-symbol-name :test #'equal)))
       (when sym (return sym)))))
 
+(defun get-symbol-local-or-global (name)
+  (if (and (symbol-defined-in-current-scope-p name)
+	   (> (length *symbol-table*) 1))
+      :local :global))
 
 ;;; -----------------------------------------------------------------
 ;;; Perform semantic Analysis of AST and Build Symbol Table
@@ -91,8 +95,7 @@ Raises an error if the name is already defined in this scope."
 	   (error "Semantic Error: Use of undeclared identifier ~A" name))
          ;; Annotate AST identifier node with binding and scope
          (setf (id-binding e) sym)
-	 (setf (id-scope e)
-	       (if (symbol-defined-in-current-scope-p name) :local :global))
+	 (setf (id-scope e) (get-local-or-global name))
          (abstract-symbol-type sym))))
     ;; Binary Expression
     ((typep e 'binary-expression)
@@ -175,8 +178,7 @@ Raises an error if the name is already defined in this scope."
   (let* ((id-node (assign-var a))
 	 (name (id-symbol id-node))
 	 (sym (lookup-symbol name))
-	 (scope (if (symbol-defined-in-current-scope-p name) :local :global)))
-    (format t "~A defined in ~A scope~%" name scope)
+	 (scope (get-local-or-global name)))
     (unless sym
       (error "Semantic Error: Assignment to undeclared identifier ~A" name))
     (when (eq (abstract-symbol-kind sym) :const)

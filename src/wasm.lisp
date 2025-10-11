@@ -134,7 +134,17 @@
       (emit-procedure-constants (block-consts b))
       (emit-procedure-variables (block-vars   b))
       (emit-statements (block-body b)))
-    (format *stream* "   )~%")))
+    (format *stream* "  )~%~%")))
+
+(defun emit-main-procedure (body)
+  (format *stream* "  (func $main~%")
+  (emit-statements body)
+  (format *stream* "  )~%~%"))
+
+(defun emit-start ()
+  (format *stream* "  (func (export \"_start\")~%")
+  (format *stream* "   call $main~%")
+  (format *stream* "  )~%"))
 
   
 (defun emit-end-program ()
@@ -159,6 +169,8 @@
       ;; Procedures
       (emit-procedures procs)
       ;; Main Procedure
-      ;; (emit-main-procedure procs)
+      (emit-main-procedure (block-body pb))
+      ;; Emith _Start
+      (emit-start)
       ;; End Program
       (emit-end-program))))
