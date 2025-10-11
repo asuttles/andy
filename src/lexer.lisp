@@ -21,8 +21,7 @@
 (defvar *token-list* '())
 
 ;;; Language Keywords
-(defconstant +keywords+
-;;;(defparameter +keywords+
+(defparameter +keywords+
   '(("const"     . :const)
     ("int"       . :int)
     ("procedure" . :procedure)
@@ -34,7 +33,7 @@
     ("while"     . :while)
     ("do"        . :do)))
 
-(defconstant +operators+
+(defparameter +operators+
   '(("+"  . :plus)
     ("-"  . :minus)
     ("*"  . :times)

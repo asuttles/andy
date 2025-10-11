@@ -209,5 +209,23 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
    2) Add location slot to the AST nodes
    3) Populate the slot when creating AST nodes in the parser
    4) Then the analyzer can access locations when raising errors.
+* Project Structure
+.
+├── LICENSE
+├── README.md
+├── andy.asd
+├── package.lisp
+├── project-notes.org
+├── src
+│   ├── analyzer.lisp
+│   ├── ast.lisp
+│   ├── lexer.lisp
+│   ├── main.lisp
+│   ├── parser.lisp
+│   └── wasm.lisp
+└── tests
+    └── test1.pl0
+    ├── test1.wasm
+    └── test1.wat
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

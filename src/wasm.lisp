@@ -19,6 +19,9 @@
     (:float 0.0)
     (t (error "Emitter: Unknown data type: ~A" pl0-type))))
 
+(defun get-scope-string (scope)
+  (if (eq scope :local) "local" "global"))
+
 (defun emit-program ()
   (format *stream* "(module ~%"))	  
 
@@ -36,6 +39,44 @@
 	   (winit (get-wasm-initializer ptype)))
       (format *stream* "  (global $~A (mut ~A) (~A.const ~A))~%"
               (var-symbol v) wtype wtype winit))))
+
+;;; Emit Binary Operator
+(defun emit-binary-op (op typ)
+  (let ((wtyp (get-wasm-type typ)))
+    (cond
+      ;; +
+      ((eq op :plus)
+       (format *stream* "   ~A.add~%" wtyp))
+      ;; -
+      ((eq op :minus)
+       (format *stream* "   ~A.sub~%" wtyp))
+      ;; *
+      ((eq op :times)
+       (format *stream* "   ~A.mul~%" wtyp))
+      ;; /
+      ((eq op :divide)
+       (format *stream* "   ~A.div_s~%" wtyp)))))
+
+;;; Emit Expressions
+(defun emit-expression (expr)
+  (cond
+    ;; Number Literal
+    ((typep expr 'number-literal)
+     (format *stream* "   ~A.const ~A~%"
+	     (get-wasm-type (expr-type expr))
+	     (number-value expr)))
+    ;; Identifier
+    ((typep expr 'identifier)
+     (format *stream* "   ~A.get $~A~%"
+	     (get-scope-string (id-scope expr)) (id-symbol expr)))
+    ;; Binary Expression
+    ((typep expr 'binary-expression)
+     (emit-expression (binary-lhs expr))
+     (emit-expression (binary-rhs expr))
+     (emit-binary-op (binary-op expr) :int)))
+     ;;(emit-binary-op (binary-op expr) (expr-type (binary-lhs expr)))))
+    ;; Unary Expression
+  )
 
 ;;; Procedure Hoisting - all procedures at top-level in wasm
 (defun collect-procedures (node)
@@ -68,15 +109,31 @@
 	     (ptyp (var-type   v))
 	     (wtyp (get-wasm-type ptyp)))
 	(format *stream* "   (local $~A ~A)~%" sym wtyp)))))
-				 
+
+(defun emit-statements (stmnt-node)
+  (cond
+    ;; Compound Statements
+    ((typep stmnt-node 'compound-statement)
+     (dolist (s (cmpnd-stmnts stmnt-node))
+       (emit-statements s)))
+    ;; Assign Statement
+    ((typep stmnt-node 'assign-statement)
+     (let* ((lhs-id    (assign-var stmnt-node))
+	    (rhs-expr  (assign-expr stmnt-node))
+	    (lhs-scope (id-scope lhs-id)))
+       (emit-expression rhs-expr)
+       (format *stream* "   ~A.set $~A~%"
+	       (if (eq lhs-scope :local) "local" "global")
+	       (id-symbol lhs-id))))))
+
 (defun emit-procedures (procs)
   (dolist (p procs)
     (format *stream* "~%  (func $~A~%"
 	    (proc-symbol p))
     (let ((b (proc-body p)))
-      (print (block-vars b))
       (emit-procedure-constants (block-consts b))
-      (emit-procedure-variables (block-vars   b)))
+      (emit-procedure-variables (block-vars   b))
+      (emit-statements (block-body b)))
     (format *stream* "   )~%")))
 
   
@@ -101,5 +158,7 @@
        (block-vars pb))
       ;; Procedures
       (emit-procedures procs)
+      ;; Main Procedure
+      ;; (emit-main-procedure procs)
       ;; End Program
       (emit-end-program))))

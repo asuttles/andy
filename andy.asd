@@ -4,6 +4,12 @@
   :license "MIT"
   :version "0.1.0"
   :depends-on ()
+
+  ;; Localize the build
+  :build-operation asdf:load-op
+  :build-pathname "build"
+
+  ;; Source files
   :serial t
   :components
   ((:module "src"

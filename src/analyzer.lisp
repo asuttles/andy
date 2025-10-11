@@ -89,8 +89,10 @@ Raises an error if the name is already defined in this scope."
        (let ((sym (lookup-symbol name)))
          (unless sym
 	   (error "Semantic Error: Use of undeclared identifier ~A" name))
-         ;; Annotate AST identifier node with binding
+         ;; Annotate AST identifier node with binding and scope
          (setf (id-binding e) sym)
+	 (setf (id-scope e)
+	       (if (symbol-defined-in-current-scope-p name) :local :global))
          (abstract-symbol-type sym))))
     ;; Binary Expression
     ((typep e 'binary-expression)
@@ -170,18 +172,24 @@ Raises an error if the name is already defined in this scope."
 
 ;;;  Assignment Statements
 (defun analyze-assignment (a)
-  (let ((var-name (assign-var a)))
-    (let ((sym (lookup-symbol var-name)))
-      (unless sym
-	(error "Semantic Error: Assignment to undeclared identifier ~A" var-name))
-      (when (eq (abstract-symbol-kind sym) :const)
-        (error "Semantic Error: Assignment to constant ~A" var-name))
-      ;; Type-check RHS against var type
-      (let ((rhs-type (analyze-expression (assign-expr a)))
-	    (lhs-type (abstract-symbol-type sym)))
-        (unless (eq rhs-type lhs-type)
+  (let* ((id-node (assign-var a))
+	 (name (id-symbol id-node))
+	 (sym (lookup-symbol name))
+	 (scope (if (symbol-defined-in-current-scope-p name) :local :global)))
+    (format t "~A defined in ~A scope~%" name scope)
+    (unless sym
+      (error "Semantic Error: Assignment to undeclared identifier ~A" name))
+    (when (eq (abstract-symbol-kind sym) :const)
+      (error "Semantic Error: Assignment to constant ~A" name))
+    ;; Type-check RHS against var type
+    (let ((rhs-type (analyze-expression (assign-expr a)))
+	  (lhs-type (abstract-symbol-type sym)))
+      (if (not (eq rhs-type lhs-type))
           (error "Semantic Error: Type mismatch assigning to ~A: got ~A, expected ~A"
-                 var-name rhs-type lhs-type))))))
+                 name rhs-type lhs-type)
+	  (setf (expr-type id-node) lhs-type)))
+    (setf (id-scope id-node) scope)
+    (setf (id-binding id-node) sym)))
 
 ;;; Procedure Calls
 (defun analyze-call (call)

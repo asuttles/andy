@@ -32,7 +32,7 @@
    :while-cond :while-body
    :read-var
    :write-expr
-   :id-symbol :id-binding
+   :id-symbol :id-binding :id-scope
    :number-value
    :cond-lhs :cond-op :cond-rhs
    :binary-lhs :binary-op :binary-rhs
@@ -104,7 +104,9 @@
 (defclass identifier (expression)
   ((symbol  :initarg :symbol  :accessor id-symbol)
    ;; Binding slot contains pointer to objects in symbol table
-   (binding :initarg :binding :accessor id-binding :initform nil)))
+   (binding :initarg :binding :accessor id-binding :initform nil)
+   ;; Scope is :local or :global
+   (scope   :initarg :scope   :accessor id-scope   :initform nil)))
 
 (defclass number-literal (expression)
   ((value  :initarg :value :accessor number-value)))
