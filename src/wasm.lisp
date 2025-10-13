@@ -23,7 +23,11 @@
   (if (eq scope :local) "local" "global"))
 
 (defun emit-program ()
-  (format *stream* "(module ~%"))	  
+  (with-open-file (io-watfile "../runtime/io.wat")
+    (loop for line = (read-line io-watfile nil)
+	  while line
+	  do (format *stream* "~A~%" line)))
+  (format *stream* "~%~%"))
 
 (defun emit-global-consts (consts)
   (dolist (c consts)
@@ -125,6 +129,10 @@
        (format *stream* "   ~A.set $~A~%"
 	       (if (eq lhs-scope :local) "local" "global")
 	       (id-symbol lhs-id))))
+    ;; Write <Expressions>
+    ((typep stmnt-node 'write-statement)
+     (emit-expression (write-expr stmnt-node))
+     (format *stream* "   call $print_i32~%"))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
      (format *stream* "   call $~A~%" (call-proc-name stmnt-node)))))

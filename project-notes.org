@@ -112,6 +112,13 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
              | "(" expression ")"
              | ("+" | "-") factor ;   (* unary +/- *)
 #+end_src
+* Memory Map
+  Total Memory 64K
+  - Program Data    =   0 to  99 bytes
+  - Scratch Data    = 100 to 199 bytes  (scratch data, IO, etc)
+  - System Scratch  = 200 to 299 bytes  (bytes read, etc)
+  - IOVec Structure = 300 to 307 bytes  (WASI uses)
+  - Free            = 400 to 65k  
 * Roadmap
 *** DONE Step 0: Project layout
 - Create directory structure:
@@ -214,18 +221,21 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 ├── LICENSE
 ├── README.md
 ├── andy.asd
+├── img
+│   └── screenshot1.png
 ├── package.lisp
 ├── project-notes.org
+├── runtime
+│   ├── io.wasm
+│   └── io.wat
 ├── src
-│   ├── analyzer.lisp
-│   ├── ast.lisp
-│   ├── lexer.lisp
-│   ├── main.lisp
-│   ├── parser.lisp
-│   └── wasm.lisp
+│   ├── analyzer.lisp
+│   ├── ast.lisp
+│   ├── lexer.lisp
+│   ├── main.lisp
+│   ├── parser.lisp
+│   └── wasm.lisp
 └── tests
     └── test1.pl0
-    ├── test1.wasm
-    └── test1.wat
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

@@ -11,13 +11,14 @@ It has:
 - Constants, variables, and procedures
 - Arithmetic expressions and conditions
 - Control flow with `if` and `while`
-- Structured blocks using `begin … end`
+- Structured blocks using `begin ... end`
 
 It is deliberately minimal, making it ideal for educational compiler projects.
 
 ## Updates
 
 - The language has been updated with comments (//) and types.
+- The language supports explicit 32-bit integer delcarations.
 
 ### Example Program
 
@@ -69,12 +70,12 @@ tests/
 Clone the repository:
 
 ```bash
-git clone https://github.com/YOURNAME/pl0-compiler.git
-cd pl0-compiler
+git clone https://github.com/asuttles/andy.git
+cd andy
 ```
 ```lisp
-(ql:quickload :pl0-compiler)
-(pl0-compiler:parse-file "tests/example.pl0")
+(ql:quickload :andy)
+(andy.main:compile-source "tests/test1.pl0")
 ```
 ## Example Output
 ![PL/0+ -> WAT](./img/screenshot1.png "Example Compilation")
@@ -87,7 +88,7 @@ The PL/0 Grammar
 
 ## More Information
 
-For more information about the project, see project-notes.org.
+For more information about the project, see [Project Notes](./project-notes.org).
 
 ## License
-MIT License. See LICENSE for details.
+MIT License. See [LICENSE](./LICENSE) for details.

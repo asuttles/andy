@@ -11,7 +11,7 @@
    :constant-declaration :variable-declaration :procedure-declaration
 
    ;; Statements
-   :compound-statement :assign-statement :call-statement
+   :compound-statement :assign-statement :call-statement 
    :if-statement :while-statement :read-statement :write-statement
 
    ;; Expressions

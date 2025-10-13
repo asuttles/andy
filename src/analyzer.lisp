@@ -204,6 +204,14 @@ Raises an error if the name is already defined in this scope."
       ;; Check Procedure Arguments HERE
       )))
 
+;;; Write to Console
+(defun analyze-write (stmt)
+  (let* ((expr (write-expr stmt))
+	 (typ (analyze-expression expr)))
+    (unless (eq typ :int)
+      (error "Semantic Error: Only integer writes are permitted!~%"))))
+
+
 ;;; Statement Analysis
 (defun analyze-statement (stmt)
   (cond
@@ -220,6 +228,10 @@ Raises an error if the name is already defined in this scope."
     ((typep stmt 'call-statement)
      (analyze-call stmt))
 
+    ;; Write Statement
+    ((typep stmt 'write-statement)
+     (analyze-write stmt))
+    
     ;; If Statement
     ((typep stmt 'if-statement)
      (let ((condition (if-cond stmt)))

@@ -28,6 +28,7 @@
     ("call"      . :call)
     ("begin"     . :begin)
     ("end"       . :end)
+    ("write"     . :write)
     ("if"        . :if)
     ("then"      . :then)
     ("while"     . :while)
