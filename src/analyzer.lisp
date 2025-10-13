@@ -96,7 +96,7 @@ Raises an error if the name is already defined in this scope."
          ;; Annotate AST identifier node with binding and scope
          (setf (id-binding e) sym)
 	 (setf (id-scope e) (get-local-or-global name))
-         (abstract-symbol-type sym))))
+	 (setf (expr-type e) (abstract-symbol-type sym)))))
     ;; Binary Expression
     ((typep e 'binary-expression)
      (let ((ltype (analyze-expression (binary-lhs e)))
@@ -137,7 +137,7 @@ Raises an error if the name is already defined in this scope."
       (unless (eq ltype rtype)
 	(error "Type mismatch for conditional expression ~A ~A ~A"
 	       ltype op rtype))
-      :int)))
+      ltype)))
 
 ;;; ─── Statement Analysis ──────────────────────────────────────────-
 
@@ -207,9 +207,12 @@ Raises an error if the name is already defined in this scope."
 ;;; Write to Console
 (defun analyze-write (stmt)
   (let* ((expr (write-expr stmt))
-	 (typ (analyze-expression expr)))
-    (unless (eq typ :int)
-      (error "Semantic Error: Only integer writes are permitted!~%"))))
+	 (typ (analyze-expression expr))
+	 (nl  (write-nl stmt)))
+    (cond ((and nl expr)
+	   (error "Semantic Error: No arguments expected for writeNL command~%"))
+	  ((eq typ :int)
+	   (error "Semantic Error: Only integer writes are permitted!~%")))))
 
 
 ;;; Statement Analysis

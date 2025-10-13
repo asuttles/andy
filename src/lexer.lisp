@@ -29,6 +29,7 @@
     ("begin"     . :begin)
     ("end"       . :end)
     ("write"     . :write)
+    ("writeNL"   . :writeNL)
     ("if"        . :if)
     ("then"      . :then)
     ("while"     . :while)

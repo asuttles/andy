@@ -91,6 +91,12 @@
     (expect-token parser :semicolon)
     (make-instance 'write-statement :expr expr)))
 
+;;; Write a Newline to the Console
+(defun parse-writeNL (parser)
+  (expect-token parser :write)
+  (expect-token parser :semicolon)
+  (make-instance 'write-statement :expr nil :nl t))
+
 ;;; If Statement
 (defun parse-if (parser)
   "Parse an if statement from PARSER,
@@ -101,7 +107,7 @@ of the form if <condition> then <body>"
     (let ((body (parse-statements parser)))
       (make-instance 'if-statement
 		     :cond condition
-		     :body body))))
+		     :conseq body))))
 
 ;;; While Statement
 (defun parse-while (parser)
@@ -123,6 +129,7 @@ of the form while <condition> do <body>"
       (:call  (parse-call parser))
       (:begin (parse-begin-block parser))
       (:write (parse-write parser))
+      (:write (parse-writeNL parser))
       (:if    (parse-if parser))
       (:while (parse-while parser))
       (t (error "Parse Error: Unexpected token ~A at line ~A, Column ~A.~%"

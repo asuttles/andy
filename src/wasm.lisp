@@ -7,6 +7,23 @@
 (defvar *stream* nil)			; Output stream
 
 
+;;; Logic Operators Hash Table
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +op-table-int+
+    '((:eql "i32.eq")
+      (:neq "i32.ne")
+      (:lss "i32.lt_s")
+      (:leq "i32.le_s")
+      (:gtr "i32.gt_s")
+      (:geq "i32.ge_s")))
+  (defparameter +op-table-float+
+    '((:eql "f64.eq")
+      (:neq "f64.ne")
+      (:lss "f64.lt")
+      (:leq "f64.le")
+      (:gtr "f64.gt")
+      (:geq "f64.ge"))))
+
 (defun get-wasm-type (pl0-type)
   (case pl0-type
     (:int "i32")
@@ -18,6 +35,12 @@
     (:int 0)
     (:float 0.0)
     (t (error "Emitter: Unknown data type: ~A" pl0-type))))
+
+(defun get-op-code-string (type op)
+  (cond ((eq type :int)
+	 (cadr (assoc op +op-table-int+)))
+	((eq type :float)
+	 (cadr (assoc op +op-table-float+)))))
 
 (defun get-scope-string (scope)
   (if (eq scope :local) "local" "global"))
@@ -114,6 +137,15 @@
 	     (wtyp (get-wasm-type ptyp)))
 	(format *stream* "   (local $~A ~A)~%" sym wtyp)))))
 
+(defun emit-cond-statements (cond)
+  (let ((lhs (cond-lhs cond))
+	(rhs (cond-rhs cond))
+	(op  (cond-op cond)))
+    (emit-expression lhs)
+    (emit-expression rhs)
+    (format *stream* "   ~A~%"
+	    (get-op-code-string (expr-type lhs) op))))
+
 (defun emit-statements (stmnt-node)
   (cond
     ;; Compound Statements
@@ -129,10 +161,23 @@
        (format *stream* "   ~A.set $~A~%"
 	       (if (eq lhs-scope :local) "local" "global")
 	       (id-symbol lhs-id))))
+    ;; IF .. THEN statement
+    ((typep stmnt-node 'if-statement)
+     (let ((condition (if-cond stmnt-node))
+	   (stmnts (if-conseq stmnt-node)))
+       (emit-cond-statements condition)
+       (format *stream* "  (if~%")
+       (format *stream* "     (then~%")
+       (emit-statements stmnts)
+       (format *stream* "     )~%")
+       (format *stream* "  )~%")))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
-     (emit-expression (write-expr stmnt-node))
-     (format *stream* "   call $print_i32~%"))
+     (if (write-nl stmnt-node)
+	 (format *stream* "   call $print_newline~%")
+	 (progn
+	   (emit-expression (write-expr stmnt-node))
+	   (format *stream* "   call $print_i32~%"))))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
      (format *stream* "   call $~A~%" (call-proc-name stmnt-node)))))

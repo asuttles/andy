@@ -31,7 +31,7 @@
    :if-cond :if-conseq
    :while-cond :while-body
    :read-var
-   :write-expr
+   :write-expr :write-nl
    :id-symbol :id-binding :id-scope
    :number-value
    :cond-lhs :cond-op :cond-rhs
@@ -97,7 +97,8 @@
   ((variable :initarg :var :accessor read-var)))
 
 (defclass write-statement (statement)
-  ((expression :initarg :expr :accessor write-expr)))
+  ((expression :initarg :expr :accessor write-expr)
+   (newline-p  :initarg :nl   :accessor write-nl :initform nil)))
 
 
 ;;; EXPRESSIONS
