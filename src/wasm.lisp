@@ -46,7 +46,7 @@
   (if (eq scope :local) "local" "global"))
 
 (defun emit-program ()
-  (with-open-file (io-watfile "../runtime/io.wat")
+  (with-open-file (io-watfile "~/programming/lisp/andy/runtime/io.wat")
     (loop for line = (read-line io-watfile nil)
 	  while line
 	  do (format *stream* "~A~%" line)))
@@ -164,12 +164,19 @@
     ;; IF .. THEN statement
     ((typep stmnt-node 'if-statement)
      (let ((condition (if-cond stmnt-node))
-	   (stmnts (if-conseq stmnt-node)))
+	   (then-stmnts (if-conseq stmnt-node))
+	   (else-stmnts (if-else stmnt-node)))
        (emit-cond-statements condition)
        (format *stream* "  (if~%")
        (format *stream* "     (then~%")
-       (emit-statements stmnts)
+       (emit-statements then-stmnts)
        (format *stream* "     )~%")
+       (if else-stmnts
+	   (progn
+	     (format *stream* "     (else~%")
+	     (emit-statements else-stmnts)
+	     (format *stream* "     )~%"))
+	   (format t "else-stmnts = ~A~%" else-stmnts))
        (format *stream* "  )~%")))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
@@ -193,16 +200,10 @@
     (format *stream* "  )~%~%")))
 
 (defun emit-main-procedure (body)
-  (format *stream* "  (func $main~%")
+  (format *stream* "  (func $main (export \"_start\")~%")
   (emit-statements body)
   (format *stream* "  )~%~%"))
 
-(defun emit-start ()
-  (format *stream* "  (func (export \"_start\")~%")
-  (format *stream* "   call $main~%")
-  (format *stream* "  )~%"))
-
-  
 (defun emit-end-program ()
   (format *stream* ")~%"))
 
@@ -214,7 +215,7 @@
     (format t "Emitting WASM...~%")
     (let* ((pb (program-block ast))
 	   (procs (collect-procedures pb)))
-      ;; Module
+      ;; Start Program
       (emit-program)
       ;; Constants
       (emit-global-consts
@@ -226,7 +227,5 @@
       (emit-procedures procs)
       ;; Main Procedure
       (emit-main-procedure (block-body pb))
-      ;; Emith _Start
-      (emit-start)
       ;; End Program
       (emit-end-program))))

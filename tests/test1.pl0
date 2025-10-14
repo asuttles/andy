@@ -14,6 +14,8 @@ begin
   x := 3;
   y := 5;
   call add;
-  if sum > 5 then
-     write sum;
+  if x > y then
+     write x;
+  else
+     write y;
 end.

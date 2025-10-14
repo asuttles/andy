@@ -67,7 +67,7 @@ Raises an error if the name is already defined in this scope."
     (let ((sym (find name scope :key #'abstract-symbol-name :test #'equal)))
       (when sym (return sym)))))
 
-(defun get-symbol-local-or-global (name)
+(defun get-local-or-global (name)
   (if (and (symbol-defined-in-current-scope-p name)
 	   (> (length *symbol-table*) 1))
       :local :global))
@@ -211,7 +211,7 @@ Raises an error if the name is already defined in this scope."
 	 (nl  (write-nl stmt)))
     (cond ((and nl expr)
 	   (error "Semantic Error: No arguments expected for writeNL command~%"))
-	  ((eq typ :int)
+	  ((not (eq typ :int))
 	   (error "Semantic Error: Only integer writes are permitted!~%")))))
 
 
@@ -237,9 +237,11 @@ Raises an error if the name is already defined in this scope."
     
     ;; If Statement
     ((typep stmt 'if-statement)
-     (let ((condition (if-cond stmt)))
-       (analyze-condition condition)
-       (analyze-statement (if-conseq stmt))))
+     (analyze-condition (if-cond stmt))
+     (analyze-statement (if-conseq stmt))
+     (let ((else-conseq (if-else stmt)))
+       (if else-conseq
+	   (analyze-statement else-conseq))))
 
     ;; While Statement
     ((typep stmt 'while-statement)

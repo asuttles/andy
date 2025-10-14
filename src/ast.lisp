@@ -28,7 +28,7 @@
    :cmpnd-stmnts
    :assign-var :assign-expr
    :call-proc-name
-   :if-cond :if-conseq
+   :if-cond :if-conseq :if-else
    :while-cond :while-body
    :read-var
    :write-expr :write-nl
@@ -86,8 +86,9 @@
   ((name :initarg :name :accessor call-proc-name)))
 
 (defclass if-statement (statement)
-  ((condition   :initarg :cond   :accessor if-cond)
-   (consequence :initarg :conseq :accessor if-conseq)))
+  ((condition        :initarg :cond   :accessor if-cond)
+   (consequence      :initarg :conseq :accessor if-conseq)
+   (else-consequence :initarg :else   :accessor if-else :initform '())))
 
 (defclass while-statement (statement)
   ((condition :initarg :cond :accessor while-cond)

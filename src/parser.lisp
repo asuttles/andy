@@ -100,14 +100,20 @@
 ;;; If Statement
 (defun parse-if (parser)
   "Parse an if statement from PARSER,
-of the form if <condition> then <body>"
+of the form if <condition> then <body> [else <body>]"
   (expect-token parser :if)
   (let ((condition (parse-condition parser)))
     (expect-token parser :then)
-    (let ((body (parse-statements parser)))
+    (let ((body (parse-statements parser))
+	  (else (if (eq (token-type (current-token parser)) :else)
+		    (progn
+		      (advance-token parser) ;Consumme :else
+		      (parse-statements parser))
+		    nil)))
       (make-instance 'if-statement
 		     :cond condition
-		     :conseq body))))
+		     :conseq body
+		     :else   else))))
 
 ;;; While Statement
 (defun parse-while (parser)
@@ -125,13 +131,13 @@ of the form while <condition> do <body>"
 (defun parse-statements (parser)
   (let ((tok (current-token parser)))
     (case (token-type tok)
-      (:ident (parse-assignment parser))
-      (:call  (parse-call parser))
-      (:begin (parse-begin-block parser))
-      (:write (parse-write parser))
-      (:write (parse-writeNL parser))
-      (:if    (parse-if parser))
-      (:while (parse-while parser))
+      (:ident   (parse-assignment parser))
+      (:call    (parse-call parser))
+      (:begin   (parse-begin-block parser))
+      (:write   (parse-write parser))
+      (:writeNL (parse-writeNL parser))
+      (:if      (parse-if parser))
+      (:while   (parse-while parser))
       (t (error "Parse Error: Unexpected token ~A at line ~A, Column ~A.~%"
 		(token-lexeme tok) (token-line tok) (token-column tok))))))
 

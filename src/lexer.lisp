@@ -32,6 +32,7 @@
     ("writeNL"   . :writeNL)
     ("if"        . :if)
     ("then"      . :then)
+    ("else"      . :else)
     ("while"     . :while)
     ("do"        . :do)))
 

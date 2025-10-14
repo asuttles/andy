@@ -1,0 +1,28 @@
+// Example Factorial Program
+const int arg = 5;
+
+int result;
+
+// Factorial Procedure
+procedure fac;
+   int n;
+
+   begin
+      n := arg;
+      if n <= 1 then
+         begin
+            result := 1;
+         end
+      else
+         begin
+            arg := n – 1;
+            call fac;
+            result := n * result;
+         end;
+   end;
+
+// Main Program
+begin
+   call fac;
+   write result;
+end.
