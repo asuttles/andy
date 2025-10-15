@@ -1,7 +1,5 @@
 // Example Factorial Program
-const int arg = 5;
-
-int result;
+int result, arg;
 
 // Factorial Procedure
 procedure fac;
@@ -15,14 +13,15 @@ procedure fac;
          end
       else
          begin
-            arg := n – 1;
+            arg := n - 1;
             call fac;
             result := n * result;
-         end;
+         end
    end;
 
 // Main Program
 begin
+   arg := 5;
    call fac;
    write result;
 end.

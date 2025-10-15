@@ -185,8 +185,9 @@ where term = 'factor binary-op factor'"
   (let ((AST-NODE (parse-factor parser)))
     (loop while (member (token-type (current-token parser)) '(:times :divide))
           do (let ((op (token-type
-			(progn (advance-token parser)
-			       (current-token parser))))
+			(prog1
+			  (current-token parser)			  
+			  (advance-token parser))))
                    (rhs (parse-factor parser)))
                (setf AST-NODE (make-instance 'binary-expression
                                              :lhs AST-NODE
