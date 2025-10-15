@@ -207,11 +207,13 @@ Raises an error if the name is already defined in this scope."
 ;;; Write to Console
 (defun analyze-write (stmt)
   (let* ((expr (write-expr stmt))
-	 (typ (analyze-expression expr))
-	 (nl  (write-nl stmt)))
+	 (nl  (write-nl stmt))
+	 (typ (if expr
+		  (analyze-expression expr)
+		  nil)))
     (cond ((and nl expr)
 	   (error "Semantic Error: No arguments expected for writeNL command~%"))
-	  ((not (eq typ :int))
+	  ((and (null nl) (not (eq typ :int)))
 	   (error "Semantic Error: Only integer writes are permitted!~%")))))
 
 

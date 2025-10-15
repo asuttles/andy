@@ -22,7 +22,14 @@
       (:lss "f64.lt")
       (:leq "f64.le")
       (:gtr "f64.gt")
-      (:geq "f64.ge"))))
+      (:geq "f64.ge")))
+  (defparameter +op-inversions+
+    '((:eql :neq)
+      (:neq :eql)
+      (:lss :geq)
+      (:leq :gtr)
+      (:gtr :leq)
+      (:geq :lss))))
 
 (defun get-wasm-type (pl0-type)
   (case pl0-type
@@ -65,7 +72,8 @@
 	   (wtype (get-wasm-type ptype))
 	   (winit (get-wasm-initializer ptype)))
       (format *stream* "  (global $~A (mut ~A) (~A.const ~A))~%"
-              (var-symbol v) wtype wtype winit))))
+              (var-symbol v) wtype wtype winit)))
+    (format *stream* "~%~%"))
 
 ;;; Emit Binary Operator
 (defun emit-binary-op (op typ)
@@ -146,6 +154,13 @@
     (format *stream* "   ~A~%"
 	    (get-op-code-string (expr-type lhs) op))))
 
+(defun invert-operator (condition)
+  "The operator in 'While <cond> ...' must be inverted
+for the WASM '<cond> br_if' style of looping."
+  (setf (cond-op condition)
+	(cadr (assoc (cond-op condition) +op-inversions+)))
+  condition)
+
 (defun emit-statements (stmnt-node)
   (cond
     ;; Compound Statements
@@ -178,6 +193,18 @@
 	     (format *stream* "     )~%"))
 	   (format t "else-stmnts = ~A~%" else-stmnts))
        (format *stream* "  )~%")))
+    ;; While Statement
+    ((typep stmnt-node 'while-statement)
+     (let ((condition (while-cond stmnt-node))
+	   (body (while-body stmnt-node))
+	   (sym  (gensym)))
+       (format *stream* "   (block $while_~A~%" sym)
+       (format *stream* "     (loop $loop_~A~%" sym)
+       (emit-cond-statements (invert-operator condition))
+       (format *stream* "       br_if $while_~A~%" sym)
+       (emit-statements body)
+       (format *stream* "   br $loop_~A~%" sym)
+       (format *stream* "   ))~%")))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
      (if (write-nl stmnt-node)

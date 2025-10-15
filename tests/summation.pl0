@@ -1,0 +1,19 @@
+// Example of While Loop
+const int n = 10;
+int i, sum;
+
+// Main Program
+begin
+   sum := 0;
+   i   := 1;
+
+   // Sum all numbers from 1 to n...
+   while i <= n do
+      begin
+         sum := sum + i;
+	 i   := i + 1;
+      end
+      
+   write $sum;
+   writeNL;
+end.

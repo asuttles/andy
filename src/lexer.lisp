@@ -153,20 +153,22 @@
     ;; Scanner Functions
     (labels
 	((peek () (when (< pos len) (char src pos)))
+	 (next () (when (< (+ pos 1) len) (char src (+ pos 1))))
 	 (getc () (prog1 (peek) (incf pos))))
       ;; Character Scanner
       (loop while (< pos len) do
-	(let ((c (peek)))
+	(let ((c (peek))
+	      (n (next)))
 	  (cond
 	    ;; Numbers
 	    ((digit-p c)
 	     (setf pos (make-number-token src pos line nl-pos)))
-	    ;; Comments
-	    ((char= c #\/)
-	     (setf pos (skip-comment src pos len line nl-pos)))
 	    ;; Symbols
 	    ((letter-p c)
 	     (setf pos (make-symbol-token src pos line nl-pos)))
+	    ;; Comments
+	    ((and (char= c #\/) (char= n #\/))
+	     (setf pos (skip-comment src pos len line nl-pos)))
 	    ;; Operators
 	    ((find c "+-*/=<>:#,;.()")
 	     (setf pos (make-operator-token src pos line nl-pos)))

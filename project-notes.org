@@ -194,21 +194,23 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 - Arrays and records.
 
 * Stuff to Add
++ Emitter needs an (indent) function that controls spacing
 + Pretty-printer
 + Command line switches
   - debug, target, listing, assembler
 + DONE - Comments
 + Function parameters
++ Function returns  
 + Types:
   + Floats (i64)
-  + Integers (i32)
+  + DONE Integers (i32)
   + +Booleans+
   + Strings
-+ elseif
++ DONE elseif
 + logic operators (and,or,xor)
   where, 0 = false; everything else = true 
-+ I/O (read, write)
-+ Arrays
++ I/O (read, DONE write)
++ Arrays (or lists) and a map or foreach function
 + for loops?  (maybe as a macro?)
 + switch statements (maybe as a macro?)
 ** Improved Error Messages

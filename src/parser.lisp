@@ -93,7 +93,7 @@
 
 ;;; Write a Newline to the Console
 (defun parse-writeNL (parser)
-  (expect-token parser :write)
+  (expect-token parser :writeNL)
   (expect-token parser :semicolon)
   (make-instance 'write-statement :expr nil :nl t))
 
