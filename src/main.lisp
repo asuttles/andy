@@ -1,5 +1,5 @@
 (defpackage :andy.main
-  (:use :cl :uiop :andy.lexer :andy.ast :andy.parser :andy.analyzer :andy.wasm)
+  (:use :cl :uiop :andy.lexer :andy.ast :andy.runtime :andy.parser :andy.analyzer :andy.emitter)
   (:export :compile-source))
 
 (in-package :andy.main)

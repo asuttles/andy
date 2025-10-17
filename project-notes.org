@@ -112,86 +112,40 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
              | "(" expression ")"
              | ("+" | "-") factor ;   (* unary +/- *)
 #+end_src
-* Memory Map
-  Total Memory 64K
-  - Program Data    =   0 to  99 bytes
-  - Scratch Data    = 100 to 199 bytes  (scratch data, IO, etc)
-  - System Scratch  = 200 to 299 bytes  (bytes read, etc)
-  - IOVec Structure = 300 to 307 bytes  (WASI uses)
-  - Free            = 400 to 65k  
-* Roadmap
-*** DONE Step 0: Project layout
-- Create directory structure:
-  #+begin_src
-  andy/
-    src/
-      lexer.lisp
-      parser.lisp
-      ast.lisp
-      symbol.lisp
-      emit.lisp
-      vm.lisp
-      main.lisp
-    tests/
-    examples/
-    andy.asd
-    package.lisp
-    README.md
-  #+end_src
+* Andy's WASM Runtime Memory Model
+** Strategy
 
-*** DONE Step 1: Define tokens
-- Represent tokens as (TYPE . VALUE).
-- Types include keywords, identifiers, numbers, operators, punctuation.
-- Example:
-  #+begin_src lisp
-  (cons :IDENT "x")
-  (cons :NUMBER 42)
-  #+end_src
+|-------------------+--------------------------------------------------------------------------------------|
+| Concept           | Purpose                                                                              |
+|-------------------+--------------------------------------------------------------------------------------|
+| Constants         | Immutable string and numeric literals emitted by the compiler.                       |
+| Globals / statics | Variables with global scope that persist across functions.                           |
+| Runtime headers   | Fixed metadata for WASI syscalls (like fd_write structs, nwritten count).            |
+| Runtime buffers   | Scratch areas for formatting output or temporary conversions.                        |
+| Heap              | Dynamic allocations that grow upward.                                                |
+| Stack             | (Optional) language-managed stack that grows downward from the top of linear memory. |
+|-------------------+--------------------------------------------------------------------------------------|
 
-*** DONE Step 2: Lexer
-- Implement =tokenize= function.
-- Handle identifiers/keywords, numbers, symbols, := operator, etc.
-- Store line/col for error reporting.
+** Map
+|----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
+| Region                     | Hex Start | Hex End | Dec Start | Dec End | Growth   | Purpose / Notes                                                              |
+|----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
+| Constant strings / data    |    0x0000 |  0x03FF |         0 |    1023 | none     | Immutable data: string literals, "constant" values emitted by compiler.      |
+| Globals / static variables |    0x0400 |  0x07FF |      1024 |    2047 | none     | Global/static vars used by all procedures. Assigned fixed offsets.           |
+| Runtime headers / sys IOVs |    0x0800 |  0x08FF |      2048 |    2303 | none     | Fixed addresses for WASI fd_write structs, iovec tables, nwritten ptrs, etc. |
+| Runtime buffers (scratch)  |    0x0900 |  0x0FFF |      2304 |    4095 | none     | Temporary space for print_i32, string building, etc.                         |
+|----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
+| Heap (dynamic allocations) |    0x1000 |   ↑ ↑ ↑ |      4096 |   ↑ ↑ ↑ | upward   | Grows upward as dynamic memory is allocated (e.g., arrays, strings).         |
+| Stack (language-managed)   |    0xF000 |   ↓ ↓ ↓ |     61440 |   ↓ ↓ ↓ | downward | Grows downward for local call frames or temporaries.                         |
+|----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
 
-*** DONE Step 3: AST design
-- Decide AST node forms: use structs or CLOS classes.
-- Examples:
-  - Program, Block, Statement, Expression nodes.
-- Benefit: easier to expand to floats, strings, or richer type system later.
-
-*** DONE Step 4: Parser (recursive descent)
-- Functions mirror grammar:
-  - =parse-program=
-  - =parse-block=
-  - =parse-statement=
-  - =parse-condition=
-  - =parse-expression=
-  - =parse-term=
-  - =parse-factor=
-- For now, parser builds AST instead of directly emitting code.
-
-*** DONE Step 5: Symbol table
-- Maintain a table with entries:
-  | name | kind (const/var/proc) | value | level | address |
-- Functions: =enter-const=, =enter-var=, =enter-proc=, =find-symbol=.
-
-*** DONE Step 6: Semantic Analysis
-*** TODO Step 6: Code emission
-- Map stack instructions to WASM text (=.wat=).
-- Strategy A: compile each PL/0 procedure to a WASM function with locals.
-- Strategy B: direct WASM emission with structured control flow.
-- Begin by restricting nested procedures for simpler mapping.
-*** TODO Step 9: Testing plan
-*** TODO Step 10: Improved Error handling
-- Lexer tracks positions.
-- Parser raises syntax errors with expected vs. actual token.
-
-*** TODO Step 11: Extensions (later)
-- Functions with return values.
-- Typed variables (int, float).
-- Floating point arithmetic.
-- Strings and simple heap management.
-- Arrays and records.
+Total Memory 64K
+  - Reserved / Runtime Headers     =   0 to 255 bytes
+  - Scratch Data                   = 100 to 199 bytes  (scratch data, IO, etc)
+  - System Scratch                 = 200 to 299 bytes  (bytes read, etc)
+  - IOVec Structure                = 300 to 307 bytes  (WASI uses)
+  - Heap                           = 400 ↓
+  - Stack                          = 64K ↑  
 
 * Stuff to Add
 + Emitter needs an (indent) function that controls spacing
@@ -205,7 +159,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   + Floats (i64)
   + DONE Integers (i32)
   + +Booleans+
-  + Strings
+  + Non-mutable ASCII Strings
 + DONE elseif
 + logic operators (and,or,xor)
   where, 0 = false; everything else = true 

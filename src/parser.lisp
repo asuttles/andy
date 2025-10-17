@@ -1,5 +1,5 @@
 (defpackage :andy.parser
-  (:use :cl :andy.ast)
+  (:use :cl :andy.ast :andy.runtime)
   (:export :parse)
   (:import-from :andy.lexer
    :token-type :token-lexeme

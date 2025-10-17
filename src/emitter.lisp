@@ -1,8 +1,8 @@
-(defpackage :andy.wasm
-  (:use :cl :andy.ast)
+(defpackage :andy.emitter
+  (:use :cl :andy.ast :andy.runtime)
   (:export :emit-wasm))
 
-(in-package :andy.wasm)
+(in-package :andy.emitter)
 
 (defvar *stream* nil)			; Output stream
 
@@ -53,12 +53,10 @@
   (if (eq scope :local) "local" "global"))
 
 (defun emit-program ()
-  (with-open-file (io-watfile "~/programming/lisp/andy/runtime/io.wat")
-    (loop for line = (read-line io-watfile nil)
-	  while line
-	  do (format *stream* "~A~%" line)))
-  (format *stream* "~%~%"))
-
+  "Emit Module Header and WASI IO Runtime"
+  (format *stream* "(module~%~%")
+  (format *stream* "~A~%~%" (get-runtime)))
+  
 (defun emit-global-consts (consts)
   (dolist (c consts)
     (let ((wtype (get-wasm-type (const-type c))))

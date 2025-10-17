@@ -16,8 +16,9 @@
 	    :components
 	    ((:file "lexer")
 	     (:file "ast")
+	     (:file "runtime")
 	     (:file "parser")
 	     (:file "analyzer")
-	     (:file "wasm")
+	     (:file "emitter")
 	     (:file "main")))))
 

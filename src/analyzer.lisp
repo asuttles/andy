@@ -1,5 +1,5 @@
 (defpackage :andy.analyzer
-  (:use :cl :andy.ast)
+  (:use :cl :andy.ast :andy.runtime)
   (:export
    :analyze-ast))
 
