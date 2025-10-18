@@ -31,6 +31,9 @@
       (:gtr :leq)
       (:geq :lss))))
 
+(defparameter *string-addresses*
+  '())
+
 (defun get-wasm-type (pl0-type)
   (case pl0-type
     (:int "i32")
@@ -56,13 +59,26 @@
   "Emit Module Header and WASI IO Runtime"
   (format *stream* "(module~%~%")
   (format *stream* "~A~%~%" (get-runtime)))
-  
+
+(defun emit-string (str)
+  (let* ((name  (const-symbol str))
+	 (text (const-value str))
+	 (len  (length text))
+	 (addr (allocate-constant-memory len)))
+    (format *stream* "  (data (i32.const ~A) ~A)~%" addr text)
+    (push (list name (cons len addr)) *string-addresses*)))
+
 (defun emit-global-consts (consts)
   (dolist (c consts)
-    (let ((wtype (get-wasm-type (const-type c))))
-      (format *stream* "  (global $~A ~A (~A.const ~A))~%"
-              (const-symbol c) wtype wtype
-              (const-value c)))))
+    (let ((type (const-type c)))
+      (if (eq type :string)
+	  ;; Emit String Data in Runtime Memory
+	  (emit-string c)
+	  ;; Emit Number Constants in WASM Memory
+	  (let ((wtype (get-wasm-type type)))
+	    (format *stream* "  (global $~A ~A (~A.const ~A))~%"
+		    (const-symbol c) wtype wtype
+		    (const-value c)))))))
 
 (defun emit-global-vars (vars)
   (dolist (v vars)
@@ -205,11 +221,23 @@ for the WASM '<cond> br_if' style of looping."
        (format *stream* "   ))~%")))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
-     (if (write-nl stmnt-node)
-	 (format *stream* "   call $print_newline~%")
-	 (progn
-	   (emit-expression (write-expr stmnt-node))
-	   (format *stream* "   call $print_i32~%"))))
+     (cond
+       ;; Write Newline
+       ((write-nl stmnt-node)
+	(format *stream* "   call $write_newline~%"))
+       ;; Write String
+       ((eq (expr-type (write-expr stmnt-node)) :string)
+	(let* ((name (id-symbol (write-expr stmnt-node)))
+	       (str-data (cadr (assoc name *string-addresses* :test #'string=)))
+	       (str-len  (car str-data))
+	       (str-addr (cdr str-data)))
+	  (format *stream* "   (call $write_string (i32.const ~A) (i32.const ~A))~%"
+		  str-addr str-len)))
+       ;; Write Result of Math/Logic Expressions
+       (t 
+	(progn
+	  (emit-expression (write-expr stmnt-node))
+	  (format *stream* "   call $write_i32~%")))))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
      (format *stream* "   call $~A~%" (call-proc-name stmnt-node)))))

@@ -24,6 +24,7 @@
 (defparameter +keywords+
   '(("const"     . :const)
     ("int"       . :int)
+    ("str"       . :string)
     ("procedure" . :procedure)
     ("call"      . :call)
     ("begin"     . :begin)
@@ -82,6 +83,24 @@
 	   :column (- start nl-pos)) *token-list*))
   pos)
 
+;;; Make a String Token
+(defun make-string-token (src pos line nl-pos)
+  (let ((start pos))
+    (incf pos)
+    ;; Scan text
+    (loop while (and (< pos (length src))
+		     (not (char= (char src pos) #\")))
+	  do (incf pos))
+    (when (not (char= (char src pos) #\"))
+      (error "Scan Error: Did not find end of string beginning at col: ~A, line: ~A~%"
+	     (- pos nl-pos) line))
+    (incf pos)
+    (push (make-token
+	   :type :string
+	   :lexeme (subseq src start pos)
+	   :line line
+	   :column (- start nl-pos)) *token-list*))
+  pos)
 
 ;;; Make a Symbol Token
 (defun make-symbol-token (src pos line nl-pos)
@@ -163,6 +182,9 @@
 	    ;; Numbers
 	    ((digit-p c)
 	     (setf pos (make-number-token src pos line nl-pos)))
+	    ;; String
+	    ((char= c #\")
+	     (setf pos (make-string-token src pos line nl-pos)))
 	    ;; Symbols
 	    ((letter-p c)
 	     (setf pos (make-symbol-token src pos line nl-pos)))

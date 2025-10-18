@@ -1,0 +1,17 @@
+// Example pl0 program
+const int max = 10,
+      str s11 = "This is a test string";
+
+int x, y, sum;
+
+// Main program block
+begin
+  x := 3;
+  y := 5;
+
+  write x;
+  writeNL;
+  write s11;
+  writeNL;
+  write "A literal string!";
+end.

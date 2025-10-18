@@ -147,7 +147,7 @@ Raises an error if the name is already defined in this scope."
   (let ((name (const-symbol c))
         (val (const-value c))
         (type (const-type c)))
-    (unless (eq type :int)
+    (unless (member type '(:int :float :string))
       (error "Semantic Error: Unrecognized type (~A) for const: ~A~%" type name))
     (let ((sym (make-abstract-symbol :name name :kind :const :type type :value val)))
       (add-symbol sym))))
@@ -213,7 +213,7 @@ Raises an error if the name is already defined in this scope."
 		  nil)))
     (cond ((and nl expr)
 	   (error "Semantic Error: No arguments expected for writeNL command~%"))
-	  ((and (null nl) (not (eq typ :int)))
+	  ((and (null nl) (not (or (eq typ :int) (eq typ :string))))
 	   (error "Semantic Error: Only integer writes are permitted!~%")))))
 
 

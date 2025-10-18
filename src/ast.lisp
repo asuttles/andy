@@ -61,9 +61,9 @@
 
 ;;; Declarations
 (defclass constant-declaration (ast-node)
-  ((symbol  :initarg :symbol :accessor const-symbol)
-   (value   :initarg :value  :accessor const-value)
-   (type    :initarg :type   :accessor const-type)))
+  ((symbol  :initarg :symbol  :accessor const-symbol)
+   (value   :initarg :value   :accessor const-value)
+   (type    :initarg :type    :accessor const-type)))
 
 (defclass variable-declaration (ast-node)
   ((symbol :initarg :symbol :accessor var-symbol)

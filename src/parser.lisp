@@ -38,6 +38,10 @@
         (error "Parse Error: Expected ~A, got ~A at line ~A, Column ~A~%"
 	       type (token-type tok) (token-line tok) (token-column tok)))))
 
+;;; String Literals ───────────────────────────────────────────────────
+
+(defparameter *string-literals* '())
+
 
 ;;; Token Value Getters  ──────────────────────────────────────────────
 
@@ -84,12 +88,32 @@
     (expect-token parser :end)
     (make-instance 'compound-statement :stmnts (nreverse stmnts))))
 
+
+;;; Generate a const declaration and identifier
+;;;   reference for a literal string.
+(defun make-string-literal (tok parser)
+  (let* ((sym (gensym)))
+    (push 
+     (make-instance 'constant-declaration
+		    :symbol sym
+		    :value (token-lexeme tok)
+		    :type :string) *string-literals*)
+    (advance-token parser)
+    (make-instance 'identifier
+		   :symbol sym
+		   :type :string)))
+
 ;;; Write Statement
 (defun parse-write (parser)
   (expect-token parser :write)
-  (let ((expr (parse-expression parser)))
+  (let* ((tok (current-token parser))
+	 (expr 
+	   (if (eq (token-type tok) :string)
+	       (make-string-literal tok parser)
+	       (parse-expression parser))))
     (expect-token parser :semicolon)
     (make-instance 'write-statement :expr expr)))
+
 
 ;;; Write a Newline to the Console
 (defun parse-writeNL (parser)
@@ -240,16 +264,21 @@ where the expression is formed by 'lhs binary-op rhs'"
       (loop
 	    (let* ((this-token (current-token parser))
 		   (type (token-type this-token)))
-	      (unless (member type '(:int :float))
+	      (unless (member type '(:int :float :string))
 		(error "Parse Error: Unknown type ~A at line ~A, Column ~A~%"
 		       type (token-line this-token) (token-column this-token)))
 	      (advance-token parser)
               (let ((name (get-ident-token parser)))
 		(expect-token parser :eql)
-		(let ((num (get-number-token parser)))
+		(let ((val
+			(case type
+			  (:int (get-number-token parser))
+			  (:string (prog1
+				       (token-lexeme (current-token parser))
+				     (advance-token parser))))))
 		  (push (make-instance 'andy.ast:constant-declaration
 				       :symbol name
-				       :value num
+				       :value val
 				       :type type)
 			consts))))
         (if (match-token parser :comma)
@@ -310,6 +339,8 @@ where the expression is formed by 'lhs binary-op rhs'"
     (unless (eq (token-type (current-token parser)) :period)
       (error "Parse Error: Expected '.' at end of program"))
     (advance-token parser)
+    ;; Append string literals to constants list
+    (nconc (block-consts block) *string-literals*)
     (make-instance 'program :block block)))
 
 

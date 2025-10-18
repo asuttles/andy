@@ -1,7 +1,7 @@
 (defpackage :andy.runtime
   (:use :cl)
   (:export :get-runtime
-	   :get-addr))
+	   :allocate-constant-memory))
 
 (in-package :andy.runtime)
 
@@ -16,9 +16,15 @@
     (:heap-base         . #x1000)
     (:stack-top         . #xF000)))
 
+(defparameter *constant-offset* 1)	; Offset 0 reserved for /n
+
 (defun get-addr (key)
   (cdr (assoc key *memory-map*)))
 
 (defun get-runtime ()
   *io-runtime*)
 
+(defun allocate-constant-memory (size)
+  (prog1
+      (+ (get-addr :const-base) *constant-offset*)
+    (setf *constant-offset* (+ size *constant-offset*))))

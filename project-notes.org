@@ -139,14 +139,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 | Stack (language-managed)   |    0xF000 |   ↓ ↓ ↓ |     61440 |   ↓ ↓ ↓ | downward | Grows downward for local call frames or temporaries.                         |
 |----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
 
-Total Memory 64K
-  - Reserved / Runtime Headers     =   0 to 255 bytes
-  - Scratch Data                   = 100 to 199 bytes  (scratch data, IO, etc)
-  - System Scratch                 = 200 to 299 bytes  (bytes read, etc)
-  - IOVec Structure                = 300 to 307 bytes  (WASI uses)
-  - Heap                           = 400 ↓
-  - Stack                          = 64K ↑  
-
 * Stuff to Add
 + Emitter needs an (indent) function that controls spacing
 + Pretty-printer
