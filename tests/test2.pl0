@@ -1,0 +1,16 @@
+//  Test grouping expressions by parenthesis.
+//  
+
+int i, x, y, z, sum;
+
+// Main Program
+begin
+   i := 1;
+   x := 2;
+   y := 3;
+   z := 4;
+
+   sum := (i + x) * (y * z);
+   write sum;
+
+end.

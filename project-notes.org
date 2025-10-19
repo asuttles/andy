@@ -140,8 +140,8 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 |----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
 
 * Stuff to Add
-+ Emitter needs an (indent) function that controls spacing
-+ Pretty-printer
++ Emitter coud use an (indent) function that controls spacing
++ Pretty-printer (for debugging)
 + Command line switches
   - debug, target, listing, assembler
 + DONE - Comments
@@ -151,7 +151,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   + Floats (i64)
   + DONE Integers (i32)
   + +Booleans+
-  + Non-mutable ASCII Strings
+  + DONE Non-mutable ASCII Strings
 + DONE elseif
 + logic operators (and,or,xor)
   where, 0 = false; everything else = true 

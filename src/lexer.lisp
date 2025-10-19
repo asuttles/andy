@@ -42,6 +42,7 @@
     ("-"  . :minus)
     ("*"  . :times)
     ("/"  . :divide)
+    ("%"  . :modulo)
     ("="  . :eql)
     ("#"  . :neq)
     ("<"  . :lss)
@@ -192,7 +193,7 @@
 	    ((and (char= c #\/) (char= n #\/))
 	     (setf pos (skip-comment src pos len line nl-pos)))
 	    ;; Operators
-	    ((find c "+-*/=<>:#,;.()")
+	    ((find c "+-*%/=<>:#,;.()")
 	     (setf pos (make-operator-token src pos line nl-pos)))
 	    ;; Newline
 	    ((char= c #\Newline)

@@ -104,7 +104,10 @@
        (format *stream* "   ~A.mul~%" wtyp))
       ;; /
       ((eq op :divide)
-       (format *stream* "   ~A.div_s~%" wtyp)))))
+       (format *stream* "   ~A.div_s~%" wtyp))
+      ;; %
+      ((eq op :modulo)
+       (format *stream* "   ~A.rem_s~%" wtyp)))))
 
 ;;; Emit Expressions
 (defun emit-expression (expr)

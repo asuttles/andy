@@ -207,7 +207,7 @@ where term = 'factor binary-op factor'"
   ;; The AST-NODE, effectively, represents the lhs of the
   ;; expression at each binary-op token.
   (let ((AST-NODE (parse-factor parser)))
-    (loop while (member (token-type (current-token parser)) '(:times :divide))
+    (loop while (member (token-type (current-token parser)) '(:times :divide :modulo))
           do (let ((op (token-type
 			(prog1
 			  (current-token parser)			  
@@ -340,7 +340,7 @@ where the expression is formed by 'lhs binary-op rhs'"
       (error "Parse Error: Expected '.' at end of program"))
     (advance-token parser)
     ;; Append string literals to constants list
-    (nconc (block-consts block) *string-literals*)
+    (setf (block-consts block) (append *string-literals* (block-consts block)))
     (make-instance 'program :block block)))
 
 
