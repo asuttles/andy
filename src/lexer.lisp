@@ -35,7 +35,10 @@
     ("then"      . :then)
     ("else"      . :else)
     ("while"     . :while)
-    ("do"        . :do)))
+    ("do"        . :do)
+    ("and"       . :and)
+    ("or"        . :or)
+    ("xor"       . :xor)))
 
 (defparameter +operators+
   '(("+"  . :plus)

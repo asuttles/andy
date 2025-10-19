@@ -219,20 +219,72 @@ where term = 'factor binary-op factor'"
                                              :rhs rhs))))
     AST-NODE))
 
-;;; Condition Expressions
-(defun parse-condition (parser)
-  "Parse a logical expression in PARSER,
-where the expression is formed by 'lhs binary-op rhs'"
-  (let* ((lhs (parse-expression parser))
+
+;;; Conditional Expressions
+
+
+;;; ORIGINAL Conditional Expression Parser
+;;; -> did not allow for logical operators
+;;; -> now subordinate to logical operator parsing
+(defun parse-comparison (parser)
+ "Parse a logical comparison expression in PARSER,
+where the expression is formed by 'lhs binary-op rhs'
+and the binary-op is member of '(=, #, <, <=, >, >=)."
+ (let* ((lhs (parse-expression parser))
 	 (tok (current-token parser))
 	 (op (token-type tok)))
-    (unless (member op '(:eql :neq :lss :leq :gtr :geq))
-      (error "Parse Error: Unexpected binary-op token ~A at line ~A, Column ~A.~%"
+   (unless (member op '(:eql :neq :lss :leq :gtr :geq))
+     (error "Parse Error: Unexpected binary-op token ~A at line ~A, Column ~A.~%"
 	     op (token-line tok) (token-column tok)))
-    (advance-token parser)
-    (let ((rhs (parse-expression parser)))
-      (make-instance 'conditional-expression
+   (advance-token parser)
+   (let ((rhs (parse-expression parser)))
+     (make-instance 'conditional-expression
 		     :lhs lhs :op op :rhs rhs))))
+
+
+;;; AND/XOR -> Second Level of Precedence for Logic Ops
+(defun parse-logic-and/xor (parser)
+ "Parse a logical comparison expression in PARSER,
+where the expression is formed by 'lhs binary-op rhs'
+and the binary-op is member of '(and, xor)."
+  ;; AST-NODE is an AST subtree that accumulates structure
+  ;; as additional rhs sub-tree gets folded in.
+  ;; AST-NODE <- (binary op AST-NODE rhs)
+  ;; The AST-NODE, effectively, represents the lhs of the
+  ;; expression at each binary-op token.
+  (let ((AST-NODE (parse-comparison parser)))
+    (loop while (member (token-type (current-token parser)) '(:and :xor))
+          do (let ((op (token-type (current-token parser))))
+               (advance-token parser)
+               (setf AST-NODE (make-instance 'conditional-expression
+                                         :lhs AST-NODE
+                                         :op op
+                                         :rhs (parse-comparison parser)))))
+    AST-NODE))
+
+;;; OR -> Highest Precedence for Logic Operations
+(defun parse-logic-or (parser)
+ "Parse a logical comparison expression in PARSER,
+where the expression is formed by 'lhs OR rhs'."
+  ;; AST-NODE is an AST subtree that accumulates structure
+  ;; as additional rhs sub-tree gets folded in.
+  ;; AST-NODE <- (binary op AST-NODE rhs)
+  ;; The AST-NODE, effectively, represents the lhs of the
+  ;; expression at each binary-op token.
+  (let ((AST-NODE (parse-logic-and/xor parser)))
+    (loop while (member (token-type (current-token parser)) '(:or))
+          do (let ((op (token-type (current-token parser))))
+               (advance-token parser)
+               (setf expr (make-instance 'conditional-expression
+                                         :lhs AST-NODE
+                                         :op op
+                                         :rhs (parse-logic-and/xor parser)))))
+    AST-NODE))
+
+;;; Driver for Conditional Expression Parsing
+(defun parse-condition (parser)
+  (parse-logic-or parser))
+
 
 ;;; Expressions
 (defun parse-expression (parser)

@@ -15,7 +15,10 @@
       (:lss "i32.lt_s")
       (:leq "i32.le_s")
       (:gtr "i32.gt_s")
-      (:geq "i32.ge_s")))
+      (:geq "i32.ge_s")
+      (:or  "i32.or")
+      (:and "i32.and")
+      (:xor "i32.xor")))
   (defparameter +op-table-float+
     '((:eql "f64.eq")
       (:neq "f64.ne")
@@ -166,8 +169,12 @@
   (let ((lhs (cond-lhs cond))
 	(rhs (cond-rhs cond))
 	(op  (cond-op cond)))
-    (emit-expression lhs)
-    (emit-expression rhs)
+    (if (typep lhs 'conditional-expression)
+	(emit-cond-statements lhs)
+	(emit-expression lhs))
+    (if (typep rhs 'conditional-expression)
+	(emit-cond-statements rhs)
+	(emit-expression rhs))
     (format *stream* "   ~A~%"
 	    (get-op-code-string (expr-type lhs) op))))
 
@@ -207,8 +214,7 @@ for the WASM '<cond> br_if' style of looping."
 	   (progn
 	     (format *stream* "     (else~%")
 	     (emit-statements else-stmnts)
-	     (format *stream* "     )~%"))
-	   (format t "else-stmnts = ~A~%" else-stmnts))
+	     (format *stream* "     )~%")))
        (format *stream* "  )~%")))
     ;; While Statement
     ((typep stmnt-node 'while-statement)

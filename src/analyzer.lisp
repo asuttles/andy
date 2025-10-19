@@ -86,7 +86,10 @@ Raises an error if the name is already defined in this scope."
   (cond
     ;; Number Literal
     ((typep e 'number-literal)
-     (expr-type e))
+     (if (integerp (number-value e))
+	 (setf (expr-type e) :int)
+	 (error "Unknown type for number literal: ~A~%"
+		(number-value e))))
     ;; Identifier
     ((typep e 'identifier)
      (let ((name (id-symbol e)))
@@ -129,14 +132,21 @@ Raises an error if the name is already defined in this scope."
   ;; analyze sub-expressions
   (let ((op  (cond-op c)))
     ;; Logic Operator Check
-    (unless (member op '(:eql :neq :lss :leq :gtr :geq))
+    (unless (member op '(:eql :neq :lss :leq :gtr :geq :or :and :xor))
       (error "Semantic Error: Conditional expression has unknown operator: ~A" op))
     ;; Type Checking
-    (let ((ltype (analyze-expression (cond-lhs c)))
-	  (rtype (analyze-expression (cond-rhs c))))
-      (unless (eq ltype rtype)
-	(error "Type mismatch for conditional expression ~A ~A ~A"
-	       ltype op rtype))
+    (let* ((lhs (cond-lhs c))
+	   (rhs (cond-rhs c))
+	   (ltype (if (typep lhs 'conditional-expression)
+		      (analyze-condition lhs)
+		      (analyze-expression lhs)))
+	   (rtype (if (typep rhs 'conditional-expression)
+		      (analyze-condition rhs)
+		      (analyze-expression rhs))))
+      (if (eq ltype rtype)
+	  (setf (expr-type c) ltype)
+	  (error "Type mismatch for conditional expression ~A ~A ~A"
+		 ltype op rtype))
       ltype)))
 
 ;;; ─── Statement Analysis ──────────────────────────────────────────-
@@ -298,4 +308,6 @@ Raises an error if the name is already defined in this scope."
   (setq *symbol-table* nil)
   (enter-scope)		
   (analyze-program ast)
-  (leave-scope))
+  (leave-scope)
+  ;; DEBUG
+  ast)

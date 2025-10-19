@@ -1,4 +1,5 @@
-//  Test grouping expressions by parenthesis.
+//  Test Logical Operations (and,or,xor) in
+//  a conditional expression.
 //  
 
 int i, x, y, z, sum;
