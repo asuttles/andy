@@ -1,0 +1,23 @@
+// The sum of all the natural numbers below 10
+//     that are multiples of 3 or 5 is 23.
+// Find the sum of all the multiples of 3 an 5 below 1000
+
+int i, x3, x5, sum;
+
+begin
+   i   := 1;
+   sum := 0;
+
+   while i < 1000 do
+      begin
+         x3 := i % 3;
+         x5 := i % 5;
+   
+         if x3 = 0 or x5 = 0 then
+            sum := sum + i;
+   	 
+         i := i + 1;
+      end
+      
+   write sum;
+end.

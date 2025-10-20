@@ -28,3 +28,4 @@
 	(format t "wat2wasm not found: compilation stopped. ~A saved in local dir.~%"
 		watfile)))
   (format t "Compilation complete."))
+

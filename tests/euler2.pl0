@@ -1,0 +1,24 @@
+// Find the sum of the even-valued terms Fibonacci terms < 4000000
+//
+// Note: Executes in 154 milliseconds in wasmtime.
+
+int temp, next, last, sum;
+
+begin
+   next := 2;
+   last := 1;
+   sum  := 0;
+
+   while next < 4000000 do
+      begin
+         temp := next % 2;
+         if temp = 0 then
+            sum := sum + next;
+   
+         temp := last;
+         last := next;
+         next := temp + last;
+      end
+
+   write sum;
+end.

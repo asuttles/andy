@@ -275,7 +275,7 @@ where the expression is formed by 'lhs OR rhs'."
     (loop while (member (token-type (current-token parser)) '(:or))
           do (let ((op (token-type (current-token parser))))
                (advance-token parser)
-               (setf expr (make-instance 'conditional-expression
+               (setf AST-NODE (make-instance 'conditional-expression
                                          :lhs AST-NODE
                                          :op op
                                          :rhs (parse-logic-and/xor parser)))))
