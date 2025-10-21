@@ -1,0 +1,78 @@
+// What is the largest prime factors of: 13195
+// Note: Executes in about 145 milliseconds on wasmtime
+
+const int x = 13195;
+
+
+int n, arg, max, temp, limit, result;
+
+
+// isPrime
+//         input:   x = number to evaluate
+//         output:  result
+//                     1 = true
+//                     0 = false
+procedure isPrime;
+   int max, i;
+
+   begin
+      i := 2;
+      result := 1;
+
+      max := arg;
+      if arg > 5 then
+         max := max / 2;
+   
+      while i < max and result = 1 do
+         begin
+            temp := arg % i;
+   
+            if temp = 0 then
+	       result := 0;
+	    else
+	       i := i + 1;
+         end
+   end;
+
+
+// Square Root
+// PL0 does not have an int sqrt or float nums yet.
+// This is a brute force estimate for it.
+procedure sqrt;
+   int i;
+
+   begin
+      i := 2;
+      temp := 4;
+      while temp <= arg do
+         begin
+            i := i + 1;
+            temp := i * i;
+	 end
+      result := i - 1;
+   end;
+
+
+// Main Program Block
+begin
+   n := 2;
+   arg := x;
+   call sqrt;
+   limit := result;
+
+   while n < limit do
+      begin
+         arg := n;
+	 call isPrime;
+	 if result = 1 then
+	    begin
+               temp := x % n;
+	       if temp = 0 then
+	          max := n;
+            end
+
+         n := n + 1;
+      end
+
+   write max;
+end.

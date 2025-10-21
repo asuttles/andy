@@ -1,4 +1,4 @@
-// Find the sum of the even-valued terms Fibonacci terms < 4000000
+// Find the sum of the even-valued Fibonacci terms < 4000000
 //
 // Note: Executes in 154 milliseconds in wasmtime.
 

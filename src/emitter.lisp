@@ -18,7 +18,8 @@
       (:geq "i32.ge_s")
       (:or  "i32.or")
       (:and "i32.and")
-      (:xor "i32.xor")))
+      (:xor "i32.xor")
+      (:xnor "i32.xor~%i32.eqz")))
   (defparameter +op-table-float+
     '((:eql "f64.eq")
       (:neq "f64.ne")
@@ -32,7 +33,10 @@
       (:lss :geq)
       (:leq :gtr)
       (:gtr :leq)
-      (:geq :lss))))
+      (:geq :lss)
+      (:and :or)
+      (:or  :and)
+      (:xor :xnor))))
 
 (defparameter *string-addresses*
   '())
@@ -165,25 +169,27 @@
 	     (wtyp (get-wasm-type ptyp)))
 	(format *stream* "   (local $~A ~A)~%" sym wtyp)))))
 
-(defun emit-cond-statements (cond)
-  (let ((lhs (cond-lhs cond))
-	(rhs (cond-rhs cond))
-	(op  (cond-op cond)))
-    (if (typep lhs 'conditional-expression)
-	(emit-cond-statements lhs)
-	(emit-expression lhs))
-    (if (typep rhs 'conditional-expression)
-	(emit-cond-statements rhs)
-	(emit-expression rhs))
-    (format *stream* "   ~A~%"
-	    (get-op-code-string (expr-type lhs) op))))
-
 (defun invert-operator (condition)
   "The operator in 'While <cond> ...' must be inverted
 for the WASM '<cond> br_if' style of looping."
   (setf (cond-op condition)
 	(cadr (assoc (cond-op condition) +op-inversions+)))
   condition)
+
+(defun emit-cond-statements (c &key (invert nil))
+  (if invert (invert-operator c))
+  (let ((lhs (cond-lhs c))
+	(rhs (cond-rhs c))
+	(op  (cond-op c)))
+    (if (typep lhs 'conditional-expression)
+	(emit-cond-statements lhs :invert invert)
+	(emit-expression lhs))
+    (if (typep rhs 'conditional-expression)
+	(emit-cond-statements rhs :invert invert)
+	(emit-expression rhs))
+    (format *stream* "   ~A~%"
+	    (get-op-code-string (expr-type lhs) op))))
+
 
 (defun emit-statements (stmnt-node)
   (cond
@@ -223,7 +229,7 @@ for the WASM '<cond> br_if' style of looping."
 	   (sym  (gensym)))
        (format *stream* "   (block $while_~A~%" sym)
        (format *stream* "     (loop $loop_~A~%" sym)
-       (emit-cond-statements (invert-operator condition))
+       (emit-cond-statements condition :invert t)
        (format *stream* "       br_if $while_~A~%" sym)
        (emit-statements body)
        (format *stream* "   br $loop_~A~%" sym)
