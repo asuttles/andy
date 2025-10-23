@@ -13,7 +13,9 @@
    ;; Statements
    :compound-statement :assign-statement :call-statement 
    :if-statement :while-statement :read-statement :write-statement
-
+   :switch-statement :switch-selector :switch-cases :switch-default 
+   :case-statement :case-label :case-body
+   
    ;; Expressions
    :identifier :number-literal :conditional-expression
    :binary-expression :unary-expression
@@ -101,6 +103,14 @@
   ((expression :initarg :expr :accessor write-expr)
    (newline-p  :initarg :nl   :accessor write-nl :initform nil)))
 
+(defclass switch-statement (statement)
+  ((selector        :initarg :selector :accessor switch-selector)
+   (case-statements :initarg :cases    :accessor switch-cases   :initform '())
+   (default         :initarg :default  :accessor switch-default :initform '())))
+
+(defclass case-statement (statement)
+  ((label  :initarg :label :accessor case-label)
+   (body   :initarg :body  :accessor case-body :initform '())))
 
 ;;; EXPRESSIONS
 (defclass identifier (expression)

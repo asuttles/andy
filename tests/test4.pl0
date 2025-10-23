@@ -1,0 +1,21 @@
+//  Test switch statement
+//  
+
+int w, x, y, z;
+
+// Main Program
+begin
+
+   x := 3;
+   
+   switch (x+1)
+      case 3:
+         write "hi";
+      case 4:
+         write "hello";
+      default:
+         write "default";
+
+   writeNL;
+
+end.

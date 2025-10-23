@@ -139,34 +139,39 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 | Stack (language-managed)   |    0xF000 |   ↓ ↓ ↓ |     61440 |   ↓ ↓ ↓ | downward | Grows downward for local call frames or temporaries.                         |
 |----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
 
-* Stuff to Add
+* Changes from PL/0
+** Stuff to Add
++ switch or case statements
+  - Use a break table (br_table $case0 $case1 $case2 ... $default)
++ For loop
+  "for( assignment-statement; conditional-expression; assignment statement) do statement(s)"
++ Function parameters and returns
 + Emitter coud use an (indent) function that controls spacing
-+ Pretty-printer (for debugging)
++ Pretty-printer? (for debugging)
 + Command line switches
   - debug, target, listing, assembler
-+ +DONE - Comments+
-+ Function parameters
-+ Function returns  
 + Add a break to jump out of a while loop early
-+ Types:
-  + Floats (i64)
-  + +DONE Integers (i32)+
-  + +Booleans+
-  + +DONE Non-mutable ASCII Strings+
-+ +DONE elseif+
-+ +DONE logic operators (and,or,xor)+
++ Floating Point Numbers
 + Short-circuiting logic operators for flow control
 + 'Not' unary operator
 + Struct/Record
-+ I/O (read, +DONE write+)
++ Read statement
 + Arrays and a map or foreach function
-+ for loops?  (maybe as a macro?)
-+ switch statements (maybe as a macro?)
-** Improved Error Messages
++ for loops
+*** Improved Error Messages
    1) Create a location struct with line/column properties
    2) Add location slot to the AST nodes
    3) Populate the slot when creating AST nodes in the parser
    4) Then the analyzer can access locations when raising errors.
+** Stuff Added    
++ Comments
++ Integers (i32)
++ Immutable ASCII Strings
++ else
++ logic operators: and,or,xor
++ write statement
+* Debugging in SLIME
+(declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure
 .
 ├── LICENSE
@@ -174,19 +179,29 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 ├── andy.asd
 ├── img
 │   └── screenshot1.png
-├── package.lisp
-├── project-notes.org
-├── runtime
-│   ├── io.wasm
+├── inc
 │   └── io.wat
+├── package.lisp
+├── proj_struct.txt
+├── project-notes.org
 ├── src
 │   ├── analyzer.lisp
 │   ├── ast.lisp
+│   ├── emitter.lisp
 │   ├── lexer.lisp
 │   ├── main.lisp
 │   ├── parser.lisp
-│   └── wasm.lisp
+│   └── runtime.lisp
 └── tests
-    └── test1.pl0
+    ├── euler1.pl0
+    ├── euler2.pl0
+    ├── euler3.pl0
+    ├── fac.pl0
+    ├── fizzbuzz.pl0
+    ├── string.pl0
+    ├── summation.pl0
+    ├── test1.pl0
+    ├── test2.pl0
+    └── test3.pl0
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

@@ -11,7 +11,7 @@
   type					; Future Expansion
   value					; for constants
   params				; for procedures
-)
+  )
 
 (defparameter *symbol-table* nil
   "A stack of scopes. Each scope is a list of symbols.
@@ -226,6 +226,12 @@ Raises an error if the name is already defined in this scope."
 	  ((and (null nl) (not (or (eq typ :int) (eq typ :string))))
 	   (error "Semantic Error: Only integer writes are permitted!~%")))))
 
+;;; Analyze Switch Cases
+(defun analyze-cases (cases)
+  (loop for c in cases do
+    (if (not (integerp (case-label c)))
+	(error "Case label ~A is not an integer~%" (case-label c))
+	(analyze-statement (case-body c)))))
 
 ;;; Statement Analysis
 (defun analyze-statement (stmt)
@@ -261,6 +267,15 @@ Raises an error if the name is already defined in this scope."
        (analyze-condition condition)
        (analyze-statement (while-body stmt))))
 
+    ;; Switch Statement
+    ((typep stmt 'switch-statement)
+     (let ((selector (switch-selector stmt))
+	   (cases (switch-cases stmt))
+	   (default (switch-default stmt)))
+       (analyze-expression selector)
+       (analyze-cases cases)
+       (analyze-statement default)))
+    
     ;; Ill-formed Statement
     (t
      (error "Semantic Error: Unknown statement type: ~A" (class-of stmt)))))

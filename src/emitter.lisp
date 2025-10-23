@@ -65,7 +65,7 @@
 (defun emit-program ()
   "Emit Module Header and WASI IO Runtime"
   (format *stream* "(module~%~%")
-  (format *stream* "~A~%~%" (get-runtime)))
+  (format *stream* "~A" (get-runtime)))
 
 (defun emit-string (str)
   (let* ((name  (const-symbol str))
@@ -190,6 +190,36 @@ for the WASM '<cond> br_if' style of looping."
     (format *stream* "   ~A~%"
 	    (get-op-code-string (expr-type lhs) op))))
 
+(defun emit-case-jump-table (c num sel)
+  (emit-expression sel)
+  (format *stream* "      i32.const ~A~%" (case-label c))
+  (format *stream* "      i32.eq~%")
+  (format *stream* "      br_if $case~A~%~%" num))
+	     
+(defun emit-case-body (c sym)
+  (emit-statements (case-body c))
+  (format *stream* "    br $switch_~A~%" sym)
+  (format *stream* "   )~%"))
+
+(defun emit-switch-statement (stmnt)
+     (let* ((sym (gensym))
+	    (cases (switch-cases stmnt))
+	    (len (length cases))
+	    (expr (switch-selector stmnt)))
+       (format *stream* "  (block $switch_~A~%" sym)
+       (format *stream* "   (block $default_~A~%" sym)
+       (loop for num downfrom len downto 1
+	     do (format *stream* "    (block $case~A~%" num))
+       (loop for c in cases
+	     for num from 1 to len 
+	     do (emit-case-jump-table c num expr))
+       (format *stream* "   br $default_~A~%" sym)
+       (format *stream* "   )~%")
+       (loop for c in cases
+	     do (emit-case-body c sym))
+       (emit-statements (switch-default stmnt))
+       (format *stream* "  )~%")))
+
 
 (defun emit-statements (stmnt-node)
   (cond
@@ -234,6 +264,9 @@ for the WASM '<cond> br_if' style of looping."
        (emit-statements body)
        (format *stream* "   br $loop_~A~%" sym)
        (format *stream* "   ))~%")))
+    ;; Switch ... Case Statements
+    ((typep stmnt-node 'switch-statement)
+     (emit-switch-statement stmnt-node))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
      (cond

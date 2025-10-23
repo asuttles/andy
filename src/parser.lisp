@@ -40,6 +40,7 @@
 
 ;;; String Literals ───────────────────────────────────────────────────
 
+;;; Collection of all string literals found in source file
 (defparameter *string-literals* '())
 
 
@@ -151,6 +152,52 @@ of the form while <condition> do <body>"
 		     :cond condition
 		     :body body))))
 
+;;; Case Statement
+(defun parse-cases (parser)
+  "Parse a case statement from PARSER,
+of the form case integer: <statements>"
+  (let ((case-list '()))
+    (loop while
+	  (eq (token-type (current-token parser)) :case)
+	  do
+	     (advance-token parser)
+	     (let ((lbl (get-number-token parser))
+		   (body (progn (expect-token parser :colon)
+				(parse-statements parser))))
+	       (format t "Processing Case: ~A~%" lbl)
+	       (push (make-instance 'case-statement
+				    :label lbl
+				    :body  body) case-list)))
+    (nreverse case-list)))
+
+;;; Default Case Statement
+(defun parse-default (parser)
+  "Parse the default case statement,
+if it exists."
+  (if (eq (token-type (current-token parser)) :default)
+      (progn
+	(expect-token parser :default)
+	(expect-token parser :colon)
+	(parse-statements parser))
+      nil))
+  
+;;; Switch Statement
+(defun parse-switch (parser)
+  "Parse a switch statement from PARSER,
+of the form switch (ident) case 1: <statement> case 2: <statement>
+default: <statement>"
+  (expect-token parser :switch)
+  (expect-token parser :lparen)
+  (let ((sel (parse-expression parser))
+	(cases (progn
+		 (expect-token parser :rparen)
+		 (parse-cases parser)))
+	(default (parse-default parser)))
+    (make-instance 'switch-statement
+		   :selector sel
+		   :cases cases
+		   :default default)))
+
 ;;; Statements
 (defun parse-statements (parser)
   (let ((tok (current-token parser)))
@@ -162,6 +209,7 @@ of the form while <condition> do <body>"
       (:writeNL (parse-writeNL parser))
       (:if      (parse-if parser))
       (:while   (parse-while parser))
+      (:switch  (parse-switch parser))
       (t (error "Parse Error: Unexpected token ~A at line ~A, Column ~A.~%"
 		(token-lexeme tok) (token-line tok) (token-column tok))))))
 
