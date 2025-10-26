@@ -1,0 +1,26 @@
+// What is the smallest number that can be divided by
+// each number from 1 to 10, without remainder. 
+
+const int inf = 1000000;	// Do not "infinite loop"
+
+int i, n, result, continue;
+
+begin
+   n := 10;			// Number to investigate
+   continue := 1;		// OuterLoop continuation state
+   while n < inf and continue = 1 do
+      begin
+         n := n + 1;		// OuterLoop iter index
+         result := 1;		// Innerloop continuation
+         i := 2;		// InnerLoop index
+         while result = 1 and i <= 10 do
+	    begin
+	       if n % i # 0 then
+	          result := 0;
+	       i := i + 1;	// InnerLoop iteration
+            end
+   if result = 1 then		// Bail, if answer found
+      continue := 0;
+   end
+   write n;
+end.

@@ -172,6 +172,7 @@
 ;;; Tokenize the string
 (defun tokenize (src)
   (format t "Scanning Source File...~%")
+  (setf *token-list* nil)
   ;; Tokenizer State
   (let ((len (length src))
 	(pos 0)

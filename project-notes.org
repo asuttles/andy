@@ -141,13 +141,10 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Changes from PL/0
 ** Stuff to Add
-+ switch or case statements
-  - Use a break table (br_table $case0 $case1 $case2 ... $default)
++ Euler #9
 + For loop
   "for( assignment-statement; conditional-expression; assignment statement) do statement(s)"
 + Function parameters and returns
-+ Emitter coud use an (indent) function that controls spacing
-+ Pretty-printer? (for debugging)
 + Command line switches
   - debug, target, listing, assembler
 + Add a break to jump out of a while loop early
@@ -157,7 +154,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Struct/Record
 + Read statement
 + Arrays and a map or foreach function
-+ for loops
 *** Improved Error Messages
    1) Create a location struct with line/column properties
    2) Add location slot to the AST nodes
@@ -168,8 +164,10 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Integers (i32)
 + Immutable ASCII Strings
 + else
++ switch-case
 + logic operators: and,or,xor
 + write statement
++ Emitter indent/outdent functions to prettify printing
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

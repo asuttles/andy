@@ -7,7 +7,7 @@
 (defvar *stream* nil)			; Output stream
 
 
-;;; Logic Operators Hash Table
+;;; Operator Hash Tables
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +op-table-int+
     '((:eql "i32.eq")
@@ -38,8 +38,24 @@
       (:or  :and)
       (:xor :xnor))))
 
-(defparameter *string-addresses*
+(defparameter *string-addresses*	; Addresses for immutable strings
   '())
+
+;;; Indent the Output Source File Structures
+
+(defparameter *indent* 0)
+
+(defun indent ()
+  (setf *indent* (+ *indent* 2)))
+
+(defun outdent ()
+  (unless (<= *indent* 0)
+    (setf *indent* (- *indent* 2))))
+
+(defun get-ind ()
+  *indent*)
+
+;;; Helper Functions for Types
 
 (defun get-wasm-type (pl0-type)
   (case pl0-type
@@ -62,9 +78,10 @@
 (defun get-scope-string (scope)
   (if (eq scope :local) "local" "global"))
 
+;;; Emit Helpers
 (defun emit-program ()
   "Emit Module Header and WASI IO Runtime"
-  (format *stream* "(module~%~%")
+  (format *stream* "~VT(module~%~%" (get-ind))
   (format *stream* "~A" (get-runtime)))
 
 (defun emit-string (str)
@@ -72,7 +89,7 @@
 	 (text (const-value str))
 	 (len  (length text))
 	 (addr (allocate-constant-memory len)))
-    (format *stream* "  (data (i32.const ~A) ~A)~%" addr text)
+    (format *stream* "~VT(data (i32.const ~A) ~A)~%" (get-ind) addr text)
     (push (list name (cons len addr)) *string-addresses*)))
 
 (defun emit-global-consts (consts)
@@ -83,7 +100,7 @@
 	  (emit-string c)
 	  ;; Emit Number Constants in WASM Memory
 	  (let ((wtype (get-wasm-type type)))
-	    (format *stream* "  (global $~A ~A (~A.const ~A))~%"
+	    (format *stream* "~VT(global $~A ~A (~A.const ~A))~%" (get-ind)
 		    (const-symbol c) wtype wtype
 		    (const-value c)))))))
 
@@ -92,9 +109,9 @@
     (let* ((ptype (var-type v))
 	   (wtype (get-wasm-type ptype))
 	   (winit (get-wasm-initializer ptype)))
-      (format *stream* "  (global $~A (mut ~A) (~A.const ~A))~%"
+      (format *stream* "~VT(global $~A (mut ~A) (~A.const ~A))~%" (get-ind)
               (var-symbol v) wtype wtype winit)))
-    (format *stream* "~%~%"))
+    (format *stream* "~%"))
 
 ;;; Emit Binary Operator
 (defun emit-binary-op (op typ)
@@ -102,31 +119,31 @@
     (cond
       ;; +
       ((eq op :plus)
-       (format *stream* "   ~A.add~%" wtyp))
+       (format *stream* "~VT~A.add~%" (get-ind) wtyp))
       ;; -
       ((eq op :minus)
-       (format *stream* "   ~A.sub~%" wtyp))
+       (format *stream* "~VT~A.sub~%" (get-ind) wtyp))
       ;; *
       ((eq op :times)
-       (format *stream* "   ~A.mul~%" wtyp))
+       (format *stream* "~VT~A.mul~%" (get-ind) wtyp))
       ;; /
       ((eq op :divide)
-       (format *stream* "   ~A.div_s~%" wtyp))
+       (format *stream* "~VT~A.div_s~%" (get-ind) wtyp))
       ;; %
       ((eq op :modulo)
-       (format *stream* "   ~A.rem_s~%" wtyp)))))
+       (format *stream* "~VT~A.rem_s~%" (get-ind) wtyp)))))
 
 ;;; Emit Expressions
 (defun emit-expression (expr)
   (cond
     ;; Number Literal
     ((typep expr 'number-literal)
-     (format *stream* "   ~A.const ~A~%"
+     (format *stream* "~VT~A.const ~A~%" (get-ind)
 	     (get-wasm-type (expr-type expr))
 	     (number-value expr)))
     ;; Identifier
     ((typep expr 'identifier)
-     (format *stream* "   ~A.get $~A~%"
+     (format *stream* "~VT~A.get $~A~%" (get-ind)
 	     (get-scope-string (id-scope expr)) (id-symbol expr)))
     ;; Binary Expression
     ((typep expr 'binary-expression)
@@ -157,9 +174,9 @@
 	     (ptyp (const-type   c))
 	     (val  (const-value  c))
 	     (wtyp (get-wasm-type ptyp)))
-	(format *stream* "   (local $~A ~A)~%" sym wtyp)
-	(format *stream* "   ~A.const ~A~%" wtyp val)
-	(format *stream* "   local.set $~A~%" sym)))))
+	(format *stream* "~VT(local $~A ~A)~%" (get-ind) sym wtyp)
+	(format *stream* "~VT~A.const ~A~%" (get-ind) wtyp val)
+	(format *stream* "~VTlocal.set $~A~%" (get-ind) sym)))))
 
 (defun emit-procedure-variables (vars)
   (when vars
@@ -167,7 +184,7 @@
       (let* ((sym  (var-symbol v))
 	     (ptyp (var-type   v))
 	     (wtyp (get-wasm-type ptyp)))
-	(format *stream* "   (local $~A ~A)~%" sym wtyp)))))
+	(format *stream* "~VT(local $~A ~A)~%" (get-ind) sym wtyp)))))
 
 (defun invert-operator (condition)
   "The operator in 'While <cond> ...' must be inverted
@@ -187,53 +204,65 @@ for the WASM '<cond> br_if' style of looping."
     (if (typep rhs 'conditional-expression)
 	(emit-cond-statements rhs :invert invert)
 	(emit-expression rhs))
-    (format *stream* "   ~A~%"
-	    (get-op-code-string (expr-type lhs) op))))
+    (indent)
+    (format *stream* "~VT~A~%" (get-ind)
+	    (get-op-code-string (expr-type lhs) op))
+    (outdent)))
 
 (defun emit-case-jump-table (c num sel)
+  (indent)
   (emit-expression sel)
-  (format *stream* "      i32.const ~A~%" (case-label c))
-  (format *stream* "      i32.eq~%")
-  (format *stream* "      br_if $case~A~%~%" num))
+  (outdent)
+  (format *stream* "~VTi32.const ~A~%" (get-ind) (case-label c))
+  (format *stream* "~VTi32.eq~%" (get-ind))
+  (format *stream* "~VTbr_if $case~A~%~%" (get-ind) num))
 	     
 (defun emit-case-body (c sym)
+  (indent)
   (emit-statements (case-body c))
-  (format *stream* "    br $switch_~A~%" sym)
-  (format *stream* "   )~%"))
+  (outdent)
+  (format *stream* "~VTbr $switch_~A~%" (get-ind) sym)
+  (format *stream* "~VT)~%" (get-ind)))
 
 (defun emit-switch-statement (stmnt)
      (let* ((sym (gensym))
 	    (cases (switch-cases stmnt))
 	    (len (length cases))
 	    (expr (switch-selector stmnt)))
-       (format *stream* "  (block $switch_~A~%" sym)
-       (format *stream* "   (block $default_~A~%" sym)
+       (format *stream* "~VT(block $switch_~A~%" (get-ind) sym)
+       (indent)
+       (format *stream* "~VT(block $default_~A~%" (get-ind) sym)
+       (indent)
        (loop for num downfrom len downto 1
-	     do (format *stream* "    (block $case~A~%" num))
+	     do (format *stream* "~VT(block $case~A~%" (get-ind) num))
        (loop for c in cases
 	     for num from 1 to len 
 	     do (emit-case-jump-table c num expr))
-       (format *stream* "   br $default_~A~%" sym)
-       (format *stream* "   )~%")
+       (format *stream* "~VTbr $default_~A~%" (get-ind) sym)
+       (outdent)
+       (format *stream* "~VT)~%" (get-ind))
+       (outdent)
        (loop for c in cases
 	     do (emit-case-body c sym))
        (emit-statements (switch-default stmnt))
-       (format *stream* "  )~%")))
+       (format *stream* "~VT)~%" (get-ind))))
 
 
 (defun emit-statements (stmnt-node)
   (cond
     ;; Compound Statements
     ((typep stmnt-node 'compound-statement)
+     (indent)
      (dolist (s (cmpnd-stmnts stmnt-node))
-       (emit-statements s)))
+       (emit-statements s))
+     (outdent))
     ;; Assign Statement
     ((typep stmnt-node 'assign-statement)
      (let* ((lhs-id    (assign-var stmnt-node))
 	    (rhs-expr  (assign-expr stmnt-node))
 	    (lhs-scope (id-scope lhs-id)))
        (emit-expression rhs-expr)
-       (format *stream* "   ~A.set $~A~%"
+       (format *stream* "~VT~A.set $~A~%" (get-ind)
 	       (if (eq lhs-scope :local) "local" "global")
 	       (id-symbol lhs-id))))
     ;; IF .. THEN statement
@@ -242,28 +271,34 @@ for the WASM '<cond> br_if' style of looping."
 	   (then-stmnts (if-conseq stmnt-node))
 	   (else-stmnts (if-else stmnt-node)))
        (emit-cond-statements condition)
-       (format *stream* "  (if~%")
-       (format *stream* "     (then~%")
+       (format *stream* "~VT(if~%" (get-ind))
+       (format *stream* "~VT(then~%" (get-ind))
+       (indent)
        (emit-statements then-stmnts)
-       (format *stream* "     )~%")
+       (outdent)
+       (format *stream* "~VT)~%" (get-ind))
        (if else-stmnts
 	   (progn
-	     (format *stream* "     (else~%")
+	     (format *stream* "~VT(else~%" (get-ind))
 	     (emit-statements else-stmnts)
-	     (format *stream* "     )~%")))
-       (format *stream* "  )~%")))
+	     (format *stream* "~VT)~%" (get-ind))))
+       (format *stream* "~VT)~%" (get-ind))))
     ;; While Statement
     ((typep stmnt-node 'while-statement)
      (let ((condition (while-cond stmnt-node))
 	   (body (while-body stmnt-node))
 	   (sym  (gensym)))
-       (format *stream* "   (block $while_~A~%" sym)
-       (format *stream* "     (loop $loop_~A~%" sym)
+       (format *stream* "~VT(block $while_~A~%" (get-ind) sym)
+       (indent)
+       (format *stream* "~VT(loop $loop_~A~%" (get-ind) sym)
+       (indent)
        (emit-cond-statements condition :invert t)
-       (format *stream* "       br_if $while_~A~%" sym)
+       (format *stream* "~VTbr_if $while_~A~%" (get-ind) sym)
        (emit-statements body)
-       (format *stream* "   br $loop_~A~%" sym)
-       (format *stream* "   ))~%")))
+       (outdent)
+       (format *stream* "~VTbr $loop_~A~%" (get-ind) sym)
+       (outdent)
+       (format *stream* "~VT))~%" (get-ind))))
     ;; Switch ... Case Statements
     ((typep stmnt-node 'switch-statement)
      (emit-switch-statement stmnt-node))
@@ -272,41 +307,43 @@ for the WASM '<cond> br_if' style of looping."
      (cond
        ;; Write Newline
        ((write-nl stmnt-node)
-	(format *stream* "   call $write_newline~%"))
+	(format *stream* "~VTcall $write_newline~%" (get-ind)))
        ;; Write String
        ((eq (expr-type (write-expr stmnt-node)) :string)
 	(let* ((name (id-symbol (write-expr stmnt-node)))
 	       (str-data (cadr (assoc name *string-addresses* :test #'string=)))
 	       (str-len  (car str-data))
 	       (str-addr (cdr str-data)))
-	  (format *stream* "   (call $write_string (i32.const ~A) (i32.const ~A))~%"
+	  (format *stream* "~VT(call $write_string (i32.const ~A) (i32.const ~A))~%" (get-ind)
 		  str-addr str-len)))
        ;; Write Result of Math/Logic Expressions
        (t 
 	(progn
 	  (emit-expression (write-expr stmnt-node))
-	  (format *stream* "   call $write_i32~%")))))
+	  (format *stream* "~VTcall $write_i32~%" (get-ind))))))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
-     (format *stream* "   call $~A~%" (call-proc-name stmnt-node)))))
+     (format *stream* "~VTcall $~A~%" (get-ind) (call-proc-name stmnt-node)))))
 
 (defun emit-procedures (procs)
   (dolist (p procs)
-    (format *stream* "~%  (func $~A~%"
+    (format *stream* "~%~VT(func $~A~%" (get-ind)
 	    (proc-symbol p))
     (let ((b (proc-body p)))
       (emit-procedure-constants (block-consts b))
       (emit-procedure-variables (block-vars   b))
       (emit-statements (block-body b)))
-    (format *stream* "  )~%~%")))
+    (format *stream* "~VT)~%~%" (get-ind))))
 
 (defun emit-main-procedure (body)
-  (format *stream* "  (func $main (export \"_start\")~%")
+  (format *stream* "~VT(func $main (export \"_start\")~%" (get-ind))
+  (indent)
   (emit-statements body)
-  (format *stream* "  )~%~%"))
+  (format *stream* "~VT)~%~%" (get-ind)))
 
 (defun emit-end-program ()
-  (format *stream* ")~%"))
+  (outdent)
+  (format *stream* "~VT)~%"(get-ind)))
 
 (defun emit-wasm (ast fn)
   (with-open-file (*stream* fn

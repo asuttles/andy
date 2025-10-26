@@ -108,9 +108,9 @@ Raises an error if the name is already defined in this scope."
        ;; arithmetic ops require numeric types (int for now)
        (cond
          ((member op '(:plus :minus :times :divide :modulo))
-          (unless (and (eq ltype :int) (eq rtype :int))
-            (error "Arithmetic operator ~A requires integers, got ~A and ~A" op ltype rtype))
-          :int)
+          (if (and (eq ltype :int) (eq rtype :int))
+	      (setf (expr-type e) ltype)
+              (error "Arithmetic operator ~A requires integers, got ~A and ~A" op ltype rtype)))
          (t (error "Semantic Error: Unknown binary op ~A" op)))))
     ;; Unary Expression
     ((typep e 'unary-expression)
