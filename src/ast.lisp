@@ -13,8 +13,8 @@
    ;; Statements
    :compound-statement :assign-statement :call-statement 
    :if-statement :read-statement :write-statement
-   :while-statement :switch-statement :break-statement
-   :case-statement 
+   :while-statement :for-statement
+   :switch-statement :break-statement :case-statement 
    
    ;; Expressions
    :identifier :number-literal :conditional-expression
@@ -35,6 +35,7 @@
    :switch-label :switch-selector :switch-cases :switch-default
    :case-label :case-body
    :break-label
+   :for-label :for-init :for-cont :for-iter :for-body
    :read-var
    :write-expr :write-nl
    :id-symbol :id-binding :id-scope
@@ -100,6 +101,13 @@
    (condition :initarg :cond :accessor while-cond)
    (body      :initarg :body :accessor while-body)))
 
+(defclass for-statement (statement)
+  ((label          :initarg :label :accessor for-label :initform nil)
+   (initialization :initarg :init  :accessor for-init)
+   (condition      :initarg :cont  :accessor for-cont)
+   (iteration      :initarg :iter  :accessor for-iter)
+   (body           :initarg :body  :accessor for-body)))
+  
 (defclass break-statement (statement)
   ((break-label :initarg :lbl :accessor break-label :initform nil)))
 

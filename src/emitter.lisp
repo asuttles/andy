@@ -111,7 +111,7 @@
 	   (winit (get-wasm-initializer ptype)))
       (format *stream* "~VT(global $~A (mut ~A) (~A.const ~A))~%" (get-ind)
               (var-symbol v) wtype wtype winit)))
-    (format *stream* "~%"))
+  (if vars (format *stream* "~%")))
 
 ;;; Emit Binary Operator
 (defun emit-binary-op (op typ)
@@ -248,6 +248,26 @@ for the WASM '<cond> br_if' style of looping."
        (emit-statements (switch-default stmnt))
        (format *stream* "~VT)~%" (get-ind))))
 
+(defun emit-for-statement (stmt)
+  (let ((init  (for-init stmt))
+	(cont  (for-cont stmt))
+	(iter  (for-iter stmt))
+	(body  (for-body stmt))
+	(label (for-label stmt)))
+    (emit-statements init)
+    (format *stream* "~VT(block ~A~%" (get-ind) label)
+    (indent)
+    (format *stream* "~VT(loop $loop_~A~%" (get-ind) label)
+    (emit-cond-statements cont :invert t)
+    (format *stream* "~VTbr_if ~A~%" (get-ind) label)
+    (emit-statements body)
+    (emit-statements iter)
+    (format *stream* "~VTbr $loop_~A~%" (get-ind) label)
+    (outdent)
+    (format *stream* "~VT)" (get-ind))
+    (outdent)
+    (format *stream* "~VT)" (get-ind))))
+
 
 (defun emit-statements (stmnt-node)
   (cond
@@ -306,6 +326,9 @@ for the WASM '<cond> br_if' style of looping."
     ;; Switch ... Case Statements
     ((typep stmnt-node 'switch-statement)
      (emit-switch-statement stmnt-node))
+    ;; For Statement
+    ((typep stmnt-node 'for-statement)
+     (emit-for-statement stmnt-node))
     ;; Write <Expressions>
     ((typep stmnt-node 'write-statement)
      (cond

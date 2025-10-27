@@ -35,6 +35,7 @@
     ("then"      . :then)
     ("else"      . :else)
     ("while"     . :while)
+    ("for"       . :for)
     ("do"        . :do)
     ("break"     . :break)
     ("switch"    . :switch)

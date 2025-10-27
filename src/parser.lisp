@@ -152,6 +152,21 @@ of the form while <condition> do <body>"
 		     :cond condition
 		     :body body))))
 
+;;; For Statement
+(defun parse-for (parser)
+  "Parse a for loop statement from PARSER"
+  (expect-token parser :for)
+  (let ((init (parse-assignment parser))
+	(cont (prog1 (parse-condition parser)
+		(expect-token parser :semicolon)))
+	(iter (parse-assignment parser)))
+    (expect-token parser :do)
+    (make-instance 'for-statement
+		   :init init
+		   :cont cont
+		   :iter iter
+		   :body (parse-statements parser))))
+
 ;;; Break Statement
 (defun parse-break (parser)
   "Parse a break statement from PARSER"
@@ -216,6 +231,7 @@ default: <statement>"
       (:writeNL (parse-writeNL parser))
       (:if      (parse-if parser))
       (:while   (parse-while parser))
+      (:for     (parse-for parser))
       (:break   (parse-break parser))
       (:switch  (parse-switch parser))
       (t (error "Parse Error: Unexpected token ~A at line ~A, Column ~A.~%"

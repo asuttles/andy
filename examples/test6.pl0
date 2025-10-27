@@ -1,0 +1,15 @@
+// Test of For Loop
+
+int i;
+
+// Main
+begin
+   for i := 1; i < 10; i := i + 1; do
+      begin
+	 if i % 7 = 0 then
+	    break;
+         write "The next number is: ";
+         write i;
+         writeNL;
+      end
+end.

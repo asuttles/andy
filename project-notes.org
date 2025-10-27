@@ -141,19 +141,15 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Changes from PL/0
 ** Stuff to Add
-+ Euler #9
-+ Add break to jump out of a while loop early
-+ For loop
-  "for( assignment-statement; conditional-expression; assignment statement) do statement(s)"
 + Function parameters and returns
 + Command line switches
   - debug, target, listing, assembler
 + Floating Point Numbers
-+ Short-circuiting logic operators for flow control
++ Short-circuiting logic operators for flow control?
 + 'Not' unary operator
 + Struct/Record
 + Read statement
-+ Arrays and a map or foreach function
++ Arrays and a foreach function
 *** Improved Error Messages
    1) Create a location struct with line/column properties
    2) Add location slot to the AST nodes
@@ -165,10 +161,11 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Immutable ASCII Strings
 + else
 + switch-case
++ C-Style for loops (with early break terminations)
 + logic operators: and,or,xor
 + write statement
 + Emitter indent/outdent functions to prettify printing
-+ Break from while loop
++ Break from while loops and switch-case statements
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

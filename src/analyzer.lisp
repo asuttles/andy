@@ -274,6 +274,21 @@ Raises an error if the name is already defined in this scope."
        (analyze-statement (while-body stmt))
        (pop *loop-stack*)))
 
+    ;; For Statement
+    ((typep stmt 'for-statement)
+     (let ((init (for-init stmt))
+	   (cont (for-cont stmt))
+	   (iter (for-iter stmt))
+	   (body (for-body stmt))
+	   (label (format nil "$for_~A" (gensym))))
+       (setf (for-label stmt) label)
+       (analyze-assignment init)
+       (analyze-condition cont)
+       (analyze-assignment iter)
+       (push label *loop-stack*)
+       (analyze-statement body)
+       (pop *loop-stack*)))
+    
     ;; Switch Statement
     ((typep stmt 'switch-statement)
      (let ((selector (switch-selector stmt))
