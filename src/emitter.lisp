@@ -212,17 +212,18 @@ for the WASM '<cond> br_if' style of looping."
 (defun emit-case-jump-table (c num sel)
   (indent)
   (emit-expression sel)
-  (outdent)
   (format *stream* "~VTi32.const ~A~%" (get-ind) (case-label c))
   (format *stream* "~VTi32.eq~%" (get-ind))
-  (format *stream* "~VTbr_if $case~A~%~%" (get-ind) num))
+  (format *stream* "~VTbr_if $case~A~%~%" (get-ind) num)
+  (outdent))  
 	     
-(defun emit-case-body (c sym)
+(defun emit-case-body (c)
   (indent)
   (emit-statements (case-body c))
-  (outdent)
-  (format *stream* "~VTbr $switch_~A~%" (get-ind) sym)
-  (format *stream* "~VT)~%" (get-ind)))
+  ;;(format *stream* "~VTbr $switch_~A~%" (get-ind) sym)
+  (format *stream* "~VT)~%" (get-ind))
+  (outdent))
+
 
 (defun emit-switch-statement (stmnt)
      (let* ((sym (switch-label stmnt))
@@ -243,7 +244,7 @@ for the WASM '<cond> br_if' style of looping."
        (format *stream* "~VT)~%" (get-ind))
        (outdent)
        (loop for c in cases
-	     do (emit-case-body c sym))
+	     do (emit-case-body c))
        (emit-statements (switch-default stmnt))
        (format *stream* "~VT)~%" (get-ind))))
 

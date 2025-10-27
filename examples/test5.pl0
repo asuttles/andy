@@ -1,0 +1,27 @@
+// Test Switch-Case-Break Statements
+
+int i;
+
+// Main Program
+begin
+   i := 2;
+
+   switch(i+1)
+      case 2:
+         begin
+            write "too low";
+	    break;
+	 end
+
+      case 3:
+         write "just right";
+
+      case 4:
+         begin
+	    writeNL;
+	    write "Fall through!";
+	    break;
+	 end
+      default:
+         write "Error!";
+end.
