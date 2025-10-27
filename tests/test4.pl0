@@ -1,21 +1,19 @@
 //  Test switch statement
 //  
 
-int w, x, y, z;
+int i;
 
 // Main Program
 begin
 
-   x := 3;
-   
-   switch (x+1)
-      case 3:
-         write "hi";
-      case 4:
-         write "hello";
-      default:
-         write "default";
-
-   writeNL;
-
+   i := 1;
+   while i < 10 do
+      begin
+         if i % 5 = 0 then
+            break;
+         write i;
+         write " is not divisible by 5!";
+         writeNL;
+         i := i + 1;
+      end
 end.

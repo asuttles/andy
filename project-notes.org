@@ -142,12 +142,12 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 * Changes from PL/0
 ** Stuff to Add
 + Euler #9
++ Add break to jump out of a while loop early
 + For loop
   "for( assignment-statement; conditional-expression; assignment statement) do statement(s)"
 + Function parameters and returns
 + Command line switches
   - debug, target, listing, assembler
-+ Add a break to jump out of a while loop early
 + Floating Point Numbers
 + Short-circuiting logic operators for flow control
 + 'Not' unary operator
@@ -168,6 +168,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + logic operators: and,or,xor
 + write statement
 + Emitter indent/outdent functions to prettify printing
++ Break from while loop
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

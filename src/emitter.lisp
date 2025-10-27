@@ -225,11 +225,11 @@ for the WASM '<cond> br_if' style of looping."
   (format *stream* "~VT)~%" (get-ind)))
 
 (defun emit-switch-statement (stmnt)
-     (let* ((sym (gensym))
+     (let* ((sym (switch-label stmnt))
 	    (cases (switch-cases stmnt))
 	    (len (length cases))
 	    (expr (switch-selector stmnt)))
-       (format *stream* "~VT(block $switch_~A~%" (get-ind) sym)
+       (format *stream* "~VT(block ~A~%" (get-ind) sym)
        (indent)
        (format *stream* "~VT(block $default_~A~%" (get-ind) sym)
        (indent)
@@ -287,18 +287,21 @@ for the WASM '<cond> br_if' style of looping."
     ((typep stmnt-node 'while-statement)
      (let ((condition (while-cond stmnt-node))
 	   (body (while-body stmnt-node))
-	   (sym  (gensym)))
-       (format *stream* "~VT(block $while_~A~%" (get-ind) sym)
+	   (sym  (while-label stmnt-node)))
+       (format *stream* "~VT(block ~A~%" (get-ind) sym)
        (indent)
        (format *stream* "~VT(loop $loop_~A~%" (get-ind) sym)
        (indent)
        (emit-cond-statements condition :invert t)
-       (format *stream* "~VTbr_if $while_~A~%" (get-ind) sym)
+       (format *stream* "~VTbr_if ~A~%" (get-ind) sym)
        (emit-statements body)
        (outdent)
        (format *stream* "~VTbr $loop_~A~%" (get-ind) sym)
        (outdent)
        (format *stream* "~VT))~%" (get-ind))))
+    ;; Break
+    ((typep stmnt-node 'break-statement)
+     (format *stream* "~VTbr ~A~%" (get-ind) (break-label stmnt-node)))
     ;; Switch ... Case Statements
     ((typep stmnt-node 'switch-statement)
      (emit-switch-statement stmnt-node))
@@ -346,6 +349,7 @@ for the WASM '<cond> br_if' style of looping."
   (format *stream* "~VT)~%"(get-ind)))
 
 (defun emit-wasm (ast fn)
+  (setf *string-addresses* '())
   (with-open-file (*stream* fn
 			    :direction :output
 			    :if-exists :supersede

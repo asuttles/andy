@@ -17,6 +17,9 @@
   "A stack of scopes. Each scope is a list of symbols.
 The list on top of the stack is the innermost scope.")
 
+(defparameter *loop-stack* nil
+  "A stack of loop blocks to track local jumps from break statements.")
+
 
 ;;; ─── Scope Management ──────────────────────────────────────────────
 
@@ -263,18 +266,32 @@ Raises an error if the name is already defined in this scope."
 
     ;; While Statement
     ((typep stmt 'while-statement)
-     (let ((condition (while-cond stmt)))
+     (let ((condition (while-cond stmt))
+	   (label (format nil "$while_~A" (gensym))))
        (analyze-condition condition)
-       (analyze-statement (while-body stmt))))
+       (setf (while-label stmt) label)
+       (push label *loop-stack*)       
+       (analyze-statement (while-body stmt))
+       (pop *loop-stack*)))
 
     ;; Switch Statement
     ((typep stmt 'switch-statement)
      (let ((selector (switch-selector stmt))
 	   (cases (switch-cases stmt))
-	   (default (switch-default stmt)))
+	   (default (switch-default stmt))
+	   (label (format nil "$switch_~A" (gensym))))
        (analyze-expression selector)
+       (setf (switch-label stmt) label)
+       (push label *loop-stack*)
        (analyze-cases cases)
-       (analyze-statement default)))
+       (analyze-statement default)
+       (pop *loop-stack*)))
+
+    ;; Break
+    ((typep stmt 'break-statement)
+     (when (null *loop-stack*)
+       (error "Semantic Error: Cannot break from non-loop block.~%"))
+     (setf (break-label stmt) (car *loop-stack*)))
     
     ;; Ill-formed Statement
     (t
@@ -320,7 +337,8 @@ Raises an error if the name is already defined in this scope."
 ;;; Perform Symantic Analysis and Build Symbol Table
 (defun analyze-ast (ast)
   "Semantic analysis entry point."
-  (setq *symbol-table* nil)
+  (setq *symbol-table* nil
+	*loop-stack* nil)
   (enter-scope)		
   (analyze-program ast)
   (leave-scope)

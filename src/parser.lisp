@@ -152,6 +152,13 @@ of the form while <condition> do <body>"
 		     :cond condition
 		     :body body))))
 
+;;; Break Statement
+(defun parse-break (parser)
+  "Parse a break statement from PARSER"
+  (expect-token parser :break)
+  (expect-token parser :semicolon)
+  (make-instance 'break-statement))
+
 ;;; Case Statement
 (defun parse-cases (parser)
   "Parse a case statement from PARSER,
@@ -209,6 +216,7 @@ default: <statement>"
       (:writeNL (parse-writeNL parser))
       (:if      (parse-if parser))
       (:while   (parse-while parser))
+      (:break   (parse-break parser))
       (:switch  (parse-switch parser))
       (t (error "Parse Error: Unexpected token ~A at line ~A, Column ~A.~%"
 		(token-lexeme tok) (token-line tok) (token-column tok))))))

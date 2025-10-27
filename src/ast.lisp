@@ -12,9 +12,9 @@
 
    ;; Statements
    :compound-statement :assign-statement :call-statement 
-   :if-statement :while-statement :read-statement :write-statement
-   :switch-statement :switch-selector :switch-cases :switch-default 
-   :case-statement :case-label :case-body
+   :if-statement :read-statement :write-statement
+   :while-statement :switch-statement :break-statement
+   :case-statement 
    
    ;; Expressions
    :identifier :number-literal :conditional-expression
@@ -31,7 +31,10 @@
    :assign-var :assign-expr
    :call-proc-name
    :if-cond :if-conseq :if-else
-   :while-cond :while-body
+   :while-label :while-cond :while-body
+   :switch-label :switch-selector :switch-cases :switch-default
+   :case-label :case-body
+   :break-label
    :read-var
    :write-expr :write-nl
    :id-symbol :id-binding :id-scope
@@ -93,8 +96,12 @@
    (else-consequence :initarg :else   :accessor if-else :initform '())))
 
 (defclass while-statement (statement)
-  ((condition :initarg :cond :accessor while-cond)
+  ((label     :initarg :label :accessor while-label :initform nil)
+   (condition :initarg :cond :accessor while-cond)
    (body      :initarg :body :accessor while-body)))
+
+(defclass break-statement (statement)
+  ((break-label :initarg :lbl :accessor break-label :initform nil)))
 
 (defclass read-statement (statement)
   ((variable :initarg :var :accessor read-var)))
@@ -104,7 +111,8 @@
    (newline-p  :initarg :nl   :accessor write-nl :initform nil)))
 
 (defclass switch-statement (statement)
-  ((selector        :initarg :selector :accessor switch-selector)
+  ((label           :initarg :label    :accessor switch-label :initform nil)
+   (selector        :initarg :selector :accessor switch-selector)
    (case-statements :initarg :cases    :accessor switch-cases   :initform '())
    (default         :initarg :default  :accessor switch-default :initform '())))
 

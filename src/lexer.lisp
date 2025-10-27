@@ -36,6 +36,7 @@
     ("else"      . :else)
     ("while"     . :while)
     ("do"        . :do)
+    ("break"     . :break)
     ("switch"    . :switch)
     ("case"      . :case)
     ("default"   . :default)
