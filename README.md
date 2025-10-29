@@ -16,29 +16,47 @@ It has:
 It is deliberately minimal, making it ideal for educational compiler projects.
 
 ## Updates
-
-- The language has been updated with comments (//) and types.
-- The language supports explicit 32-bit integer delcarations.
-
+The language has been updated with:
+  - C-style line comments (//).
+  - 32-bit integer types.
+  - Immutable ASCII strings.
+  - if-then-else statements.
+  - switch-case-default statements.
+  - Logical operators: and, or, xor
+  - write and writeNL statements.
+  - Loop break statements (break from while and switch)
+  - Functions
+  
+  The language is becomming more Pascal and C-like in every new release.
+  
 ### Example Program
 
 ```pl0
-// Example pl0 program
-const int max = 10;
+// What is the smallest number that can be divided by
+// each number from 1 to 10, without remainder. 
 
-int x, y, sum;
+const int inf = 1000000;	// Do not "infinite loop"
 
-// Procedure 'add' adds 2 integers
-procedure add;
+int i, n, result, continue;
+
 begin
-   sum := x + y;
-end;
-
-// Main program block
-begin
-  x := 3;
-  y := 5;
-  call add;
+   n := 10;			// Number to investigate
+   continue := 1;		// OuterLoop continuation state
+   while n < inf and continue = 1 do
+      begin
+         n := n + 1;		// OuterLoop iter index
+         result := 1;		// Innerloop continuation
+         i := 2;		// InnerLoop index
+         while result = 1 and i <= 10 do
+	    begin
+	       if n % i # 0 then
+	          result := 0;
+	       i := i + 1;	// InnerLoop iteration
+            end
+   if result = 1 then		// Bail, if answer found
+      continue := 0;
+   end
+   write n;
 end.
 ```
 
@@ -47,14 +65,18 @@ end.
 ```text
 
 src/
+  main.lisp      ; Main program driver
+  ast.lisp       ; Abstract syntax tree (AST) definitions  
   lexer.lisp     ; Tokenizer for PL/0 source code
-  ast.lisp       ; Abstract syntax tree (AST) definitions
   parser.lisp    ; Recursive-descent parser for PL/0 grammar
   analyzer.lisp  : Symbol table generator and symantic checking
+  runtime.lisp   : Emit runtime functions to WAT output file
   emitter.lisp   ; Code generator for IR / WASM
-  main.lisp      ; Main program driver
 
-tests/
+inc/
+  io.wat         : IO Runtime Functions in WAT format
+
+exampless/
   *.pl0          ; Example PL/0 programs for testing
 ```
 
@@ -78,7 +100,7 @@ cd andy
 (andy.main:compile-source "tests/test1.pl0")
 ```
 ## Example Output
-![PL/0+ -> WAT](./img/screenshot1.png "Example Compilation")
+![PL/0+ -> WAT](./img/screenshot.png "Example Compilation")
 
 ## References
 

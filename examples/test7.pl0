@@ -1,0 +1,19 @@
+// Test Recursive Function Calling
+
+int x;
+
+// Fibonacci Function
+fun fib(int n) : int
+   begin
+      if n = 1 or n = 2 then
+         ret 1;
+      else
+         ret fib(n-2) + fib(n-1);
+   end
+
+// Main Function
+begin
+   x := 10;
+   write fib(x);
+   writeNL;
+end.

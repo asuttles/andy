@@ -3,9 +3,7 @@
 
 const int x = 13195;
 
-
 int n, arg, max, temp, limit, result;
-
 
 // isPrime
 //         input:   x = number to evaluate

@@ -20,6 +20,8 @@ The list on top of the stack is the innermost scope.")
 (defparameter *loop-stack* nil
   "A stack of loop blocks to track local jumps from break statements.")
 
+(defparameter *function-stack* nil
+  "A stack of procedure contexts for use by return function analysis.")
 
 ;;; ─── Scope Management ──────────────────────────────────────────────
 
@@ -84,6 +86,22 @@ Raises an error if the name is already defined in this scope."
 
 ;;; ─── Expression Analysis ─────────────────────────────────────────
 
+;;; Function Call Analysis
+(defun analyze-funcall (f)
+  (let* ((name (funcall-symbol f))
+	 (symbol (lookup-symbol name)))
+    (setf (funcall-binding f) symbol)
+    ;; Check function scope
+    (unless symbol
+      (error "Semantic Error: Call of func ~A not in scope or not defined." name))
+    ;; Match arguments with function parameters
+    (let ((arg-types (mapcar #'analyze-expression (andy.ast:funcall-args f)))
+	  (param-types (mapcar #'expr-type (abstract-symbol-params symbol))))
+      (unless (equal arg-types param-types)
+	(error "Semantic Error: Call func ~A has wrong argument types." name)))
+    ;; Return the function type
+    (setf (expr-type f) (abstract-symbol-type symbol))))
+
 ;;; Number, Identifier, and Expressions
 (defun analyze-expression (e)
   (cond
@@ -103,6 +121,9 @@ Raises an error if the name is already defined in this scope."
          (setf (id-binding e) sym)
 	 (setf (id-scope e) (get-local-or-global name))
 	 (setf (expr-type e) (abstract-symbol-type sym)))))
+    ;; Function Call
+    ((typep e 'function-call)
+     (analyze-funcall e))
     ;; Binary Expression
     ((typep e 'binary-expression)
      (let ((ltype (analyze-expression (binary-lhs e)))
@@ -186,6 +207,35 @@ Raises an error if the name is already defined in this scope."
       (analyze-block (proc-body p))
       (leave-scope))))
 
+;;; Function Definition Analysis
+(defun analyze-function (f)
+  (let* ((name (func-symbol f))
+	 (sym (lookup-symbol name)))
+    (unless (and sym (eq (abstract-symbol-kind sym) :function))
+      (error "Semantic Error: Function ~A not predeclared" name))
+    (push sym *function-stack*)
+    (enter-scope)
+    (dolist (p (func-params f))
+      (add-symbol (make-abstract-symbol :name (id-symbol p)
+					:kind :param
+					:type (expr-type p)
+					:value nil)))
+    (analyze-block (func-body f))
+    (pop *function-stack*)
+    (leave-scope)))
+
+;;; Analyze Function Return
+(defun analyze-return (r)
+  (let ((func-type (abstract-symbol-type
+		    (car *function-stack*)))
+	(ret-expr (return-expr r)))
+    (analyze-expression ret-expr)
+    (unless (eq func-type (expr-type ret-expr))
+      (error "Error: Function ~A returns wrong type: ~A"
+	     (abstract-symbol-name (car *function-stack*))
+	     (expr-type ret-expr)))))
+
+
 ;;;  Assignment Statements
 (defun analyze-assignment (a)
   (let* ((id-node (assign-var a))
@@ -252,6 +302,10 @@ Raises an error if the name is already defined in this scope."
     ((typep stmt 'call-statement)
      (analyze-call stmt))
 
+    ;; Return Statement
+    ((typep stmt 'return-statement)
+     (analyze-return stmt))
+    
     ;; Write Statement
     ((typep stmt 'write-statement)
      (analyze-write stmt))
@@ -327,7 +381,7 @@ Raises an error if the name is already defined in this scope."
   (dolist (v (block-vars block-node)) 
     (analyze-variable-decl v))
 
-  ;; PROCEDURES -- two pass:
+  ;; PROCEDURES and FUNCTIONS -- two pass:
 
   ;; Insert procedure name symbols into current scope
   (dolist (p (block-procs block-node))
@@ -340,6 +394,18 @@ Raises an error if the name is already defined in this scope."
   (dolist (p (block-procs block-node))
     (analyze-procedure p))
 
+  ;; Insert Function name symbols into current scope
+  (dolist (f (block-funcs block-node))
+    (let* ((name (func-symbol f))
+	   (sym (make-symbol-entry name :function
+				   :type (func-type f)
+				   :params (func-params f))))
+      (add-symbol sym)))
+
+  ;; Analyze Function Body
+  (dolist (f (block-funcs block-node))
+    (analyze-function f))
+  
   ;; Code BODY (begin ... end)
   (analyze-statement (block-body block-node)))
 

@@ -27,6 +27,8 @@
     ("str"       . :string)
     ("procedure" . :procedure)
     ("call"      . :call)
+    ("fun"       . :function)
+    ("ret"       . :return)
     ("begin"     . :begin)
     ("end"       . :end)
     ("write"     . :write)

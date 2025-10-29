@@ -38,12 +38,6 @@
         (error "Parse Error: Expected ~A, got ~A at line ~A, Column ~A~%"
 	       type (token-type tok) (token-line tok) (token-column tok)))))
 
-;;; String Literals ───────────────────────────────────────────────────
-
-;;; Collection of all string literals found in source file
-(defparameter *string-literals* '())
-
-
 ;;; Token Value Getters  ──────────────────────────────────────────────
 
 (defun get-ident-token (parser)
@@ -59,6 +53,11 @@
 (defun get-number-type (token)
   ;; Function Stub
   (if token :int nil))
+
+;;; String Literals ───────────────────────────────────────────────────
+
+;;; Collection of all string literals found in source file
+(defparameter *string-literals* '())
 
 
 ;;; ─── Parse Statements  ────────────────────────────────────────────
@@ -78,6 +77,13 @@
   (let ((name (get-ident-token parser)))
     (expect-token parser :semicolon)
     (make-instance 'call-statement :name name)))
+
+;;; Return Statement
+(defun parse-return (parser)
+  (expect-token parser :return)
+  (let ((expr (parse-expression parser)))
+    (expect-token parser :semicolon)
+    (make-instance 'return-statement :expr expr)))
 
 ;;; Block of Statements
 (defun parse-begin-block (parser)
@@ -226,6 +232,7 @@ default: <statement>"
     (case (token-type tok)
       (:ident   (parse-assignment parser))
       (:call    (parse-call parser))
+      (:return  (parse-return parser))
       (:begin   (parse-begin-block parser))
       (:write   (parse-write parser))
       (:writeNL (parse-writeNL parser))
@@ -238,6 +245,21 @@ default: <statement>"
 		(token-lexeme tok) (token-line tok) (token-column tok))))))
 
 ;;; ─── Parse Expressions ────────────────────────────────────────────
+
+;;; Expression Funcalls
+(defun parse-funcall (parser)
+  (let ((symbol (get-ident-token parser)))
+    (expect-token parser :lparen)
+    (let ((args '()))
+      (loop until (match-token parser :rparen)
+	    do
+	       (push (parse-expression parser) args)
+	       (unless (match-token parser :rparen)
+		 (expect-token parser :comma)))
+      (expect-token parser :rparen)
+      (make-instance 'function-call
+		     :symbol symbol
+		     :args (nreverse args)))))
 
 ;;; Expression Factors
 (defun parse-factor (parser)
@@ -254,9 +276,11 @@ default: <statement>"
        (make-instance 'unary-expression
 		      :op :minus
 		      :expr (parse-factor parser)))
-      (:ident				; Variable
-       (make-instance 'identifier
-		      :symbol (get-ident-token parser)))
+      (:ident				; Variable or Funcall 
+       (if (eq (token-type (next-token parser)) :lparen)
+	   (parse-funcall parser)
+	   (make-instance 'identifier
+			  :symbol (get-ident-token parser))))
       (:number				; Number Literal
        (make-instance 'number-literal
 		      :value (get-number-token parser)
@@ -442,6 +466,44 @@ where the expression is formed by 'lhs OR rhs'."
 			procs)))))
    (nreverse procs)))
 
+;;; Block - Function Parameters
+(defun parse-function-params (parser)
+  (let ((params nil))
+    (loop until (match-token parser :rparen)
+	  do (let ((type (prog1 (token-type (current-token parser))
+			   (advance-token parser)))
+		   (id (get-ident-token parser)))
+	       (unless (member type '(:int))
+		 (error "Parse Error: param ~A has invalid type: ~A~%" id type))			
+	       (push (make-instance 'identifier
+				    :symbol id
+				    :type type)
+		     params)))
+    (nreverse params)))
+
+	     
+;;; Block - Functions
+(defun parse-function-declarations (parser)
+  (let ((funcs nil))
+    (loop while (eq (token-type (current-token parser)) :function)
+	  do (progn
+	       (advance-token parser)
+	       (let ((symbol (prog1 (get-ident-token parser)
+			       (expect-token parser :lparen)))
+		     (params (parse-function-params parser))
+		     (type (progn
+			     (expect-token parser :rparen)
+			     (expect-token parser :colon)
+			     (token-type (current-token parser)))))
+		 (advance-token parser)
+		 (push (make-instance 'function-declaration
+				      :symbol symbol
+				      :params params
+				      :type type
+				      :body (parse-block parser))
+		       funcs))))
+    (nreverse funcs)))
+
 
 ;;; ─── Parse Program ────────────────────────────────────────────────
 
@@ -450,11 +512,13 @@ where the expression is formed by 'lhs OR rhs'."
   (let ((consts (parse-constant-declarations parser))
         (ints   (parse-integer-declarations parser))
         (procs  (parse-procedure-declarations parser))
+	(funcs  (parse-function-declarations parser))
         (body   (parse-statements parser)))
     (make-instance 'program-block
                    :consts consts
                    :vars ints
                    :procs procs
+		   :funcs funcs
                    :body body)))
 
 ;;; Program

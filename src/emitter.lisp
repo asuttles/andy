@@ -145,6 +145,12 @@
     ((typep expr 'identifier)
      (format *stream* "~VT~A.get $~A~%" (get-ind)
 	     (get-scope-string (id-scope expr)) (id-symbol expr)))
+    ;; Function Call
+    ((typep expr 'function-call)
+     ;; Emit Function Arguments
+     (dolist (arg (funcall-args expr))
+       (emit-expression arg))
+     (format *stream* "~VTcall $~A~%" (get-ind) (funcall-symbol expr)))
     ;; Binary Expression
     ((typep expr 'binary-expression)
      (emit-expression (binary-lhs expr))
@@ -164,6 +170,18 @@
     ((typep node 'program-block)
      ;; Recursively build list, ignoring NILs...
      (mapcan #'collect-procedures (block-procs node)))
+    (t nil)))
+
+;;; Function Hoisting - all functions at top-level in wasm
+(defun collect-functions (node)
+  "Return a flat list of all function declarations in the AST."
+  (cond
+    ((typep node 'function-declaration)
+     (cons node
+           (collect-functions (func-body node))))
+    ((typep node 'program-block)
+     ;; Recursively build list, ignoring NILs...
+     (mapcan #'collect-functions (block-funcs node)))
     (t nil)))
 
 
@@ -293,6 +311,7 @@ for the WASM '<cond> br_if' style of looping."
 	   (else-stmnts (if-else stmnt-node)))
        (emit-cond-statements condition)
        (format *stream* "~VT(if~%" (get-ind))
+       (indent)
        (format *stream* "~VT(then~%" (get-ind))
        (indent)
        (emit-statements then-stmnts)
@@ -301,8 +320,11 @@ for the WASM '<cond> br_if' style of looping."
        (if else-stmnts
 	   (progn
 	     (format *stream* "~VT(else~%" (get-ind))
+	     (indent)
 	     (emit-statements else-stmnts)
+	     (outdent)
 	     (format *stream* "~VT)~%" (get-ind))))
+       (outdent)
        (format *stream* "~VT)~%" (get-ind))))
     ;; While Statement
     ((typep stmnt-node 'while-statement)
@@ -334,7 +356,7 @@ for the WASM '<cond> br_if' style of looping."
      (cond
        ;; Write Newline
        ((write-nl stmnt-node)
-	(format *stream* "~VTcall $write_newline~%" (get-ind)))
+	(format *stream* "~VT(call $write_newline)~%" (get-ind)))
        ;; Write String
        ((eq (expr-type (write-expr stmnt-node)) :string)
 	(let* ((name (id-symbol (write-expr stmnt-node)))
@@ -350,7 +372,12 @@ for the WASM '<cond> br_if' style of looping."
 	  (format *stream* "~VTcall $write_i32~%" (get-ind))))))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
-     (format *stream* "~VTcall $~A~%" (get-ind) (call-proc-name stmnt-node)))))
+     (format *stream* "~VTcall $~A~%" (get-ind) (call-proc-name stmnt-node)))
+    ;; Return Statement
+    ((typep stmnt-node 'return-statement)
+     (emit-expression (return-expr stmnt-node))
+     (format *stream* "~VTlocal.set $_result~%" (get-ind))
+     (format *stream* "~VTbr $return~%" (get-ind)))))
 
 (defun emit-procedures (procs)
   (dolist (p procs)
@@ -362,6 +389,33 @@ for the WASM '<cond> br_if' style of looping."
       (emit-statements (block-body b)))
     (format *stream* "~VT)~%~%" (get-ind))))
 
+(defun emit-functions (funcs)
+  (dolist (f funcs)
+    (format *stream* "~%~VT(func $~A " (get-ind) (func-symbol f))
+    (dolist (p (func-params f))
+      (let ((type (expr-type p))
+	    (name (id-symbol p)))
+	(format *stream* "(param $~A ~A) " name (get-wasm-type type))))
+    (let ((ret-type (get-wasm-type (func-type f)))
+	  (b (func-body f)))
+      (format *stream* "(result ~A)~%" ret-type)
+      (indent)
+      ;; Constants and Variables
+      (format *stream* "~VT(local $_result ~A)~%~%" (get-ind) ret-type)
+      (emit-procedure-constants (block-consts b))
+      (emit-procedure-variables (block-vars   b))
+      ;; Return Block  
+      (format *stream* "~VT(block $return~%" (get-ind))
+      (indent)
+      ;; Code Body
+      (emit-statements (block-body b))
+      (outdent)
+      (format *stream* "~VT)  ;; End Return Block~%" (get-ind))
+      ;; Exit and Return 
+      (format *stream* "~VTlocal.get $_result~%" (get-ind))
+      (outdent)
+      (format *stream* "~VT)~%~%~%" (get-ind)))))
+    
 (defun emit-main-procedure (body)
   (format *stream* "~VT(func $main (export \"_start\")~%" (get-ind))
   (indent)
@@ -380,7 +434,8 @@ for the WASM '<cond> br_if' style of looping."
 			    :if-does-not-exist :create)
     (format t "Emitting WASM...~%")
     (let* ((pb (program-block ast))
-	   (procs (collect-procedures pb)))
+	   (procs (collect-procedures pb))
+	   (funcs (collect-functions pb)))
       ;; Start Program
       (emit-program)
       ;; Constants
@@ -389,8 +444,9 @@ for the WASM '<cond> br_if' style of looping."
       ;; Global Variables
       (emit-global-vars	
        (block-vars pb))
-      ;; Procedures
+      ;; Procedures and Functions
       (emit-procedures procs)
+      (emit-functions funcs)
       ;; Main Procedure
       (emit-main-procedure (block-body pb))
       ;; End Program

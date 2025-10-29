@@ -141,7 +141,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Changes from PL/0
 ** Stuff to Add
-+ Function parameters and returns
 + Command line switches
   - debug, target, listing, assembler
 + Floating Point Numbers
@@ -166,6 +165,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + write statement
 + Emitter indent/outdent functions to prettify printing
 + Break from while loops and switch-case statements
++ Function parameters and returns
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure
@@ -201,3 +201,12 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
     └── test3.pl0
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]
+* TODO
++ DONE - Check that function program block ends in a return statement
++ DONE - Check that the type of the expression returned by the return statement is the
+  same as the function type.
++ DONE - Create a funcall expression with a return type.
++ DONE - Analyze function call to ensure:
+  + DONE - params match signature
+  + DONE - function name is in scope
+  + DONE - return type of expression matches what is expected
