@@ -24,6 +24,7 @@
 (defparameter +keywords+
   '(("const"     . :const)
     ("int"       . :int)
+    ("void"      . :void)
     ("str"       . :string)
     ("procedure" . :procedure)
     ("call"      . :call)
@@ -45,7 +46,8 @@
     ("default"   . :default)
     ("and"       . :and)
     ("or"        . :or)
-    ("xor"       . :xor)))
+    ("xor"       . :xor)
+    ("program"   . :program)))
 
 (defparameter +operators+
   '(("+"  . :plus)

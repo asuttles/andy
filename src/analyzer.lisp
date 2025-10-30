@@ -13,14 +13,14 @@
   params				; for procedures
   )
 
-(defparameter *symbol-table* nil
+(defvar *symbol-table* nil
   "A stack of scopes. Each scope is a list of symbols.
 The list on top of the stack is the innermost scope.")
 
-(defparameter *loop-stack* nil
+(defvar *loop-stack* nil
   "A stack of loop blocks to track local jumps from break statements.")
 
-(defparameter *function-stack* nil
+(defvar *function-stack* nil
   "A stack of procedure contexts for use by return function analysis.")
 
 ;;; ─── Scope Management ──────────────────────────────────────────────
@@ -226,15 +226,19 @@ Raises an error if the name is already defined in this scope."
 
 ;;; Analyze Function Return
 (defun analyze-return (r)
-  (let ((func-type (abstract-symbol-type
-		    (car *function-stack*)))
-	(ret-expr (return-expr r)))
+  (let* ((scope (car *function-stack*))
+	 (func-type
+	  ;; Program or Function Return
+	   (if (= (length *function-stack*) 1)
+	       scope 			; Main Program 
+	       (abstract-symbol-type	; Function
+		scope)))
+	 (ret-expr (return-expr r)))
     (analyze-expression ret-expr)
     (unless (eq func-type (expr-type ret-expr))
       (error "Error: Function ~A returns wrong type: ~A"
 	     (abstract-symbol-name (car *function-stack*))
 	     (expr-type ret-expr)))))
-
 
 ;;;  Assignment Statements
 (defun analyze-assignment (a)
@@ -413,15 +417,16 @@ Raises an error if the name is already defined in this scope."
 ;;; Program Analysis
 (defun analyze-program (prog-node)
   (let ((block (program-block prog-node)))
+    (push (program-type prog-node) *function-stack*)
     (analyze-block block)))
 
 ;;; Perform Symantic Analysis and Build Symbol Table
 (defun analyze-ast (ast)
   "Semantic analysis entry point."
   (setq *symbol-table* nil
-	*loop-stack* nil)
+	*loop-stack* nil
+	*function-stack* nil)
   (enter-scope)		
   (analyze-program ast)
   (leave-scope)
-  ;; DEBUG
   ast)

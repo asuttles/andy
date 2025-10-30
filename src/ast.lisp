@@ -5,7 +5,7 @@
    :ast-node :statement :expression
 
    ;; Program structure
-   :program :program-block
+   :program :program-block :program-type
 
    ;; Declarations
    :constant-declaration :variable-declaration :procedure-declaration :function-declaration
@@ -59,7 +59,8 @@
 
 ;;; PROGRAM Structure
 (defclass program (ast-node)
-  ((block :initarg :block :accessor program-block)))
+  ((block :initarg :block :accessor program-block)
+   (type  :initarg :type  :accessor program-type)))
 
 (defclass program-block (ast-node)
   ((constants  :initarg :consts :accessor block-consts :initform '())

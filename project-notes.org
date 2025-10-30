@@ -201,12 +201,3 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
     └── test3.pl0
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]
-* TODO
-+ DONE - Check that function program block ends in a return statement
-+ DONE - Check that the type of the expression returned by the return statement is the
-  same as the function type.
-+ DONE - Create a funcall expression with a return type.
-+ DONE - Analyze function call to ensure:
-  + DONE - params match signature
-  + DONE - function name is in scope
-  + DONE - return type of expression matches what is expected

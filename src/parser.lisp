@@ -523,13 +523,18 @@ where the expression is formed by 'lhs OR rhs'."
 
 ;;; Program
 (defun parse-program (parser)
-  (let ((block (parse-block parser)))
-    (unless (eq (token-type (current-token parser)) :period)
-      (error "Parse Error: Expected '.' at end of program"))
-    (advance-token parser)
-    ;; Append string literals to constants list
-    (setf (block-consts block) (append *string-literals* (block-consts block)))
-    (make-instance 'program :block block)))
+  (expect-token parser :program)
+  (let ((type (token-type (current-token parser))))
+    (if (member type '(:int :float :void))
+	(advance-token parser)
+	(error "Parse Error: Unknown Return Type for Program"))
+    (let ((block (parse-block parser)))
+      (unless (eq (token-type (current-token parser)) :period)
+	(error "Parse Error: Expected '.' at end of program"))
+      (advance-token parser)
+      ;; Append string literals to constants list
+      (setf (block-consts block) (append *string-literals* (block-consts block)))
+      (make-instance 'program :type type :block block))))
 
 
 ;;; Parse the token stream...

@@ -38,12 +38,12 @@
       (:or  :and)
       (:xor :xnor))))
 
-(defparameter *string-addresses*	; Addresses for immutable strings
+(defvar *string-addresses*	; Addresses for immutable strings
   '())
 
 ;;; Indent the Output Source File Structures
 
-(defparameter *indent* 0)
+(defvar *indent* 0)
 
 (defun indent ()
   (setf *indent* (+ *indent* 2)))
@@ -416,10 +416,23 @@ for the WASM '<cond> br_if' style of looping."
       (outdent)
       (format *stream* "~VT)~%~%~%" (get-ind)))))
     
-(defun emit-main-procedure (body)
-  (format *stream* "~VT(func $main (export \"_start\")~%" (get-ind))
+(defun emit-main-procedure (body type)
+  (format *stream* "~VT(func $main (export \"_start\")" (get-ind))
+  (if (member type '(:int :float))
+      (progn
+	(format *stream* " (result ~A)~%" (get-wasm-type type))
+	(format *stream* "~VT(local $_result ~A)~%~%" (get-ind) (get-wasm-type type))
+	(format *stream* "~VT(block $return~%" (get-ind))
+	(indent))
+      (format *stream* "~%"))
   (indent)
   (emit-statements body)
+  (outdent)
+  (if (member type '(:int :float))
+      (progn
+	(format *stream* "~VT)  ;; End Return Block~%" (get-ind))
+	(format *stream* "~VTlocal.get $_result~%" (get-ind))
+	(outdent)))
   (format *stream* "~VT)~%~%" (get-ind)))
 
 (defun emit-end-program ()
@@ -448,6 +461,6 @@ for the WASM '<cond> br_if' style of looping."
       (emit-procedures procs)
       (emit-functions funcs)
       ;; Main Procedure
-      (emit-main-procedure (block-body pb))
+      (emit-main-procedure (block-body pb) (program-type ast))
       ;; End Program
       (emit-end-program))))
