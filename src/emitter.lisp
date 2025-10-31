@@ -155,8 +155,7 @@
     ((typep expr 'binary-expression)
      (emit-expression (binary-lhs expr))
      (emit-expression (binary-rhs expr))
-     (emit-binary-op (binary-op expr) :int)))
-     ;;(emit-binary-op (binary-op expr) (expr-type (binary-lhs expr)))))
+     (emit-binary-op (binary-op expr) (expr-type (binary-lhs expr))))))
     ;; Unary Expression
   )
 

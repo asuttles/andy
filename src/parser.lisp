@@ -1,5 +1,5 @@
 (defpackage :andy.parser
-  (:use :cl :andy.ast :andy.runtime)
+  (:use :cl :andy.ast :andy.runtime :parse-float)
   (:export :parse)
   (:import-from :andy.lexer
    :token-type :token-lexeme
@@ -45,14 +45,15 @@
   (let ((tok (expect-token parser :ident)))
     (token-lexeme tok)))
 
-(defun get-number-token (parser)
+(defun get-integer-token (parser)
   "Consume a number token and return its value as an integer"
-  (let ((tok (expect-token parser :number)))
+  (let ((tok (expect-token parser :integer)))
     (parse-integer (token-lexeme tok))))
 
-(defun get-number-type (token)
-  ;; Function Stub
-  (if token :int nil))
+(defun get-float-token (parser)
+  "Consume a number token and return its value as a float"
+  (let ((tok (expect-token parser :float)))
+    (parse-float:parse-float (token-lexeme tok))))
 
 ;;; String Literals ───────────────────────────────────────────────────
 
@@ -189,7 +190,7 @@ of the form case integer: <statements>"
 	  (eq (token-type (current-token parser)) :case)
 	  do
 	     (advance-token parser)
-	     (let ((lbl (get-number-token parser))
+	     (let ((lbl (get-integer-token parser))
 		   (body (progn (expect-token parser :colon)
 				(parse-statements parser))))
 	       (format t "Processing Case: ~A~%" lbl)
@@ -281,10 +282,14 @@ default: <statement>"
 	   (parse-funcall parser)
 	   (make-instance 'identifier
 			  :symbol (get-ident-token parser))))
-      (:number				; Number Literal
+      (:int				; Integer Literal
        (make-instance 'number-literal
-		      :value (get-number-token parser)
-		      :type  (get-number-type  tok)))
+		      :value (get-integer-token parser)
+		      :type  :int))
+      (:float				; Float Literal
+       (make-instance 'number-literal
+		      :value (get-float-token parser)
+		      :type  :float))
       (:lparen				; ( expr )
        (advance-token parser) 
        (let ((expr (parse-expression parser)))
@@ -420,7 +425,7 @@ where the expression is formed by 'lhs OR rhs'."
 		(expect-token parser :eql)
 		(let ((val
 			(case type
-			  (:int (get-number-token parser))
+			  (:int (get-integer-token parser))
 			  (:string (prog1
 				       (token-lexeme (current-token parser))
 				     (advance-token parser))))))
@@ -444,6 +449,20 @@ where the expression is formed by 'lhs OR rhs'."
 	(push (make-instance 'variable-declaration
 			     :symbol (get-ident-token parser)
 			     :type :int) vars)
+	(if (match-token parser :comma)
+	    (advance-token parser)
+	    (return (progn
+		      (expect-token parser :semicolon)
+		      (nreverse vars))))))))
+
+(defun parse-float-declarations (parser)
+  (when (eq (token-type (current-token parser)) :float)
+    (advance-token parser)
+    (let ((vars nil))
+      (loop
+	(push (make-instance 'variable-declaration
+			     :symbol (get-ident-token parser)
+			     :type :float) vars)
 	(if (match-token parser :comma)
 	    (advance-token parser)
 	    (return (progn
@@ -511,12 +530,13 @@ where the expression is formed by 'lhs OR rhs'."
 (defun parse-block (parser)
   (let ((consts (parse-constant-declarations parser))
         (ints   (parse-integer-declarations parser))
+	(flts   (parse-float-declarations parser))
         (procs  (parse-procedure-declarations parser))
 	(funcs  (parse-function-declarations parser))
         (body   (parse-statements parser)))
     (make-instance 'program-block
                    :consts consts
-                   :vars ints
+                   :vars (append ints flts)
                    :procs procs
 		   :funcs funcs
                    :body body)))

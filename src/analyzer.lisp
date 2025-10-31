@@ -107,10 +107,10 @@ Raises an error if the name is already defined in this scope."
   (cond
     ;; Number Literal
     ((typep e 'number-literal)
-     (if (integerp (number-value e))
-	 (setf (expr-type e) :int)
-	 (error "Unknown type for number literal: ~A~%"
-		(number-value e))))
+     (unless (member (expr-type e) '(:int :float))
+       (error "Unknown type for number literal: ~A~%"
+	      (number-value e)))
+     (expr-type e))
     ;; Identifier
     ((typep e 'identifier)
      (let ((name (id-symbol e)))
@@ -129,12 +129,12 @@ Raises an error if the name is already defined in this scope."
      (let ((ltype (analyze-expression (binary-lhs e)))
            (rtype (analyze-expression (binary-rhs e)))
            (op (binary-op e)))
-       ;; arithmetic ops require numeric types (int for now)
+       ;; arithmetic ops require numeric types
        (cond
          ((member op '(:plus :minus :times :divide :modulo))
-          (if (and (eq ltype :int) (eq rtype :int))
+          (if (eq ltype rtype)
 	      (setf (expr-type e) ltype)
-              (error "Arithmetic operator ~A requires integers, got ~A and ~A" op ltype rtype)))
+              (error "Operator ~A requires matching types, got ~A and ~A" op ltype rtype)))
          (t (error "Semantic Error: Unknown binary op ~A" op)))))
     ;; Unary Expression
     ((typep e 'unary-expression)
@@ -142,8 +142,8 @@ Raises an error if the name is already defined in this scope."
            (op (unary-op e)))
        (cond
          ((eq op :minus)
-          (unless (eq typ :int) (error "Unary - requires integer"))
-          :int)
+          (unless (member typ '(:int :float)) (error "Unary - requires float or integer"))
+          typ)
          ((eq op :plus)
           typ)
          (t (error "Unknown unary op ~A" op)))))
@@ -280,8 +280,8 @@ Raises an error if the name is already defined in this scope."
 		  nil)))
     (cond ((and nl expr)
 	   (error "Semantic Error: No arguments expected for writeNL command~%"))
-	  ((and (null nl) (not (or (eq typ :int) (eq typ :string))))
-	   (error "Semantic Error: Only integer writes are permitted!~%")))))
+	  ((and (null nl) (not (member typ '(:int :float :string))))
+	   (error "Semantic Error: Only floats,ints and strings can be printed.~%")))))
 
 ;;; Analyze Switch Cases
 (defun analyze-cases (cases)

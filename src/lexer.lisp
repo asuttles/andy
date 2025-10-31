@@ -24,6 +24,7 @@
 (defparameter +keywords+
   '(("const"     . :const)
     ("int"       . :int)
+    ("float"     . :float)
     ("void"      . :void)
     ("str"       . :string)
     ("procedure" . :procedure)
@@ -87,14 +88,23 @@
 (defun make-number-token (src pos line nl-pos)
   (let ((start pos))
     ;; Scan digits
-    (loop while (and (< pos (length src))
-                     (digit-p (char src pos)))
+    (loop for c = (char src pos)
+	  while (and (< pos (length src))
+		     (or (char= c #\.)
+			 (digit-p c)))
           do (incf pos))
-    (push (make-token
-	   :type :number
-	   :lexeme (subseq src start pos)
-	   :line line
-	   :column (- start nl-pos)) *token-list*))
+    (let* ((str (subseq src start pos))
+	   (num (read-from-string str))
+	   (type (cond ((typep num 'integer) :int)
+		       ((typep num 'float) :float)
+		       (t nil))))
+      (unless type (error "Parse Error: Cannot parse number ~A on line ~A"
+			  str line))
+      (push (make-token
+	     :type type
+	     :lexeme str
+	     :line line
+	     :column (- start nl-pos)) *token-list*)))
   pos)
 
 ;;; Make a String Token

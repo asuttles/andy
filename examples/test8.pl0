@@ -1,0 +1,10 @@
+program float
+
+float pi, r;
+
+begin
+   r  := 4.0;
+   pi := 3.14;
+   
+   ret pi * r * r;
+end.
