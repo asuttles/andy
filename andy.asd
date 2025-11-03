@@ -2,8 +2,8 @@
   :description "A simple PL/0 compiler targeting WASM"
   :author "Andrew Suttles"
   :license "MIT"
-  :version "0.1.0"
-  :depends-on ()
+  :version "0.7.0"
+  :depends-on (:parse-float)
 
   ;; Localize the build
   :build-operation asdf:load-op

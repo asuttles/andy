@@ -1,0 +1,14 @@
+// Test Arrays
+program void
+
+int x, y, arr[10];
+float j, k[3], l[2], m;
+
+begin
+  arr[3] := 5;
+  y      := 10;
+  arr[2] := y * arr[3];
+
+  write "It Works!";
+  writeNL;
+end.

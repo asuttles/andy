@@ -30,7 +30,7 @@
     ("procedure" . :procedure)
     ("call"      . :call)
     ("fun"       . :function)
-    ("ret"       . :return)
+    ("return"    . :return)
     ("begin"     . :begin)
     ("end"       . :end)
     ("write"     . :write)
@@ -68,7 +68,9 @@
     (";"  . :semicolon)
     ("."  . :period)
     ("("  . :lparen)
-    (")"  . :rparen)))
+    (")"  . :rparen)
+    ("["  . :lbracket)
+    ("]"  . :rbracket)))
 
 ;;; Slurp source file into a string
 (defun read-file (filename)
@@ -217,7 +219,7 @@
 	    ((and (char= c #\/) (char= n #\/))
 	     (setf pos (skip-comment src pos len line nl-pos)))
 	    ;; Operators
-	    ((find c "+-*%/=<>:#,;.()")
+	    ((find c "+-*%/=<>:#,;.()[]")
 	     (setf pos (make-operator-token src pos line nl-pos)))
 	    ;; Newline
 	    ((char= c #\Newline)

@@ -141,14 +141,19 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Changes from PL/0
 ** Stuff to Add
++ Fixed=sized arrays
++ A foreach function
++ Variable-sized collection data structure  
++ Random number generator
++ Read statement
 + Command line switches
   - debug, target, listing, assembler
-+ Floating Point Numbers
 + Short-circuiting logic operators for flow control?
 + 'Not' unary operator
 + Struct/Record
-+ Read statement
-+ Arrays and a foreach function
++ Cast floats/ints (f32.convert_i32_s)   int(x) or float(x)
++ Test negative integers and floats
++ Bounds checking for array references and assigns
 *** Improved Error Messages
    1) Create a location struct with line/column properties
    2) Add location slot to the AST nodes
@@ -166,6 +171,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Emitter indent/outdent functions to prettify printing
 + Break from while loops and switch-case statements
 + Function parameters and returns
++ Floating Point Numbers
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

@@ -1,6 +1,10 @@
 (defpackage :andy.emitter
   (:use :cl :andy.ast :andy.runtime)
-  (:export :emit-wasm))
+  (:export :emit-wasm)
+  (:import-from :andy.analyzer
+   :abstract-symbol-kind
+   :abstract-symbol-type
+   :abstract-symbol-value))
 
 (in-package :andy.emitter)
 
@@ -106,11 +110,12 @@
 
 (defun emit-global-vars (vars)
   (dolist (v vars)
-    (let* ((ptype (var-type v))
-	   (wtype (get-wasm-type ptype))
-	   (winit (get-wasm-initializer ptype)))
-      (format *stream* "~VT(global $~A (mut ~A) (~A.const ~A))~%" (get-ind)
-              (var-symbol v) wtype wtype winit)))
+    (unless (eq (var-kind v) :array)	; Skip Arrays - stored in heap
+      (let* ((ptype (var-type v))
+	     (wtype (get-wasm-type ptype))
+	     (winit (get-wasm-initializer ptype)))
+	(format *stream* "~VT(global $~A (mut ~A) (~A.const ~A))~%" (get-ind)
+		(var-symbol v) wtype wtype winit))))
   (if vars (format *stream* "~%")))
 
 ;;; Emit Binary Operator
@@ -143,8 +148,25 @@
 	     (number-value expr)))
     ;; Identifier
     ((typep expr 'identifier)
-     (format *stream* "~VT~A.get $~A~%" (get-ind)
-	     (get-scope-string (id-scope expr)) (id-symbol expr)))
+     (let* ((sym (id-binding expr))
+	    (kind (abstract-symbol-kind sym)))
+       (if (eq kind :array)
+	   ;; Emit Array Reference
+	   (progn
+	     (format *stream* "~VTi32.const ~A  ;; base~%"
+		     (get-ind) (abstract-symbol-value sym))
+	     (format *stream* "~VT                ;; index~%"
+		     (get-ind))
+	     (emit-expression (id-index expr))
+	     (format *stream* "~VTi32.const ~A~%"
+		     (get-ind) (if (eq (abstract-symbol-type sym) :float)
+				   8 4))
+	     (format *stream* "~VTi32.mul~%" (get-ind))
+	     (format *stream* "~VTi32.add      ;; Base + offset~%" (get-ind))
+	     (format *stream* "~VTi32.load~%" (get-ind)))
+	   ;; Emit Variable Reference 
+	   (format *stream* "~VT~A.get $~A~%" (get-ind)
+		   (get-scope-string (id-scope expr)) (id-symbol expr)))))
     ;; Function Call
     ((typep expr 'function-call)
      ;; Emit Function Arguments
@@ -155,8 +177,8 @@
     ((typep expr 'binary-expression)
      (emit-expression (binary-lhs expr))
      (emit-expression (binary-rhs expr))
-     (emit-binary-op (binary-op expr) (expr-type (binary-lhs expr))))))
-    ;; Unary Expression
+     (emit-binary-op (binary-op expr) (expr-type (binary-lhs expr)))))
+  ;; Unary Expression
   )
 
 ;;; Procedure Hoisting - all procedures at top-level in wasm
@@ -298,11 +320,28 @@ for the WASM '<cond> br_if' style of looping."
     ((typep stmnt-node 'assign-statement)
      (let* ((lhs-id    (assign-var stmnt-node))
 	    (rhs-expr  (assign-expr stmnt-node))
-	    (lhs-scope (id-scope lhs-id)))
+	    (lhs-scope (id-scope lhs-id))
+	    (lhs-sym   (id-binding lhs-id))
+	    (lhs-kind  (abstract-symbol-kind lhs-sym)))
        (emit-expression rhs-expr)
-       (format *stream* "~VT~A.set $~A~%" (get-ind)
-	       (if (eq lhs-scope :local) "local" "global")
-	       (id-symbol lhs-id))))
+       (if (eq lhs-kind :array)
+	   ;; Emit Array Target
+	   (progn
+	     (format *stream* "~VTi32.const ~A  ;; base~%"
+		     (get-ind) (abstract-symbol-value lhs-sym))
+	     (format *stream* "~VT                ;; index~%"
+		     (get-ind))
+	     (emit-expression (id-index lhs-id))
+	     (format *stream* "~VTi32.const ~A~%"
+		     (get-ind) (if (eq (abstract-symbol-type lhs-sym) :float)
+				   8 4))
+	     (format *stream* "~VTi32.mul~%" (get-ind))
+	     (format *stream* "~VTi32.add      ;; Base + offset~%" (get-ind))
+	     (format *stream* "~VTi32.store~%" (get-ind)))
+	   ;; Emit Variable Target
+	   (format *stream* "~VT~A.set $~A~%" (get-ind)
+		   (if (eq lhs-scope :local) "local" "global")
+		   (id-symbol lhs-id)))))
     ;; IF .. THEN statement
     ((typep stmnt-node 'if-statement)
      (let ((condition (if-cond stmnt-node))
@@ -450,6 +489,7 @@ for the WASM '<cond> br_if' style of looping."
 	   (funcs (collect-functions pb)))
       ;; Start Program
       (emit-program)
+      (indent)
       ;; Constants
       (emit-global-consts
        (block-consts pb))
@@ -462,4 +502,5 @@ for the WASM '<cond> br_if' style of looping."
       ;; Main Procedure
       (emit-main-procedure (block-body pb) (program-type ast))
       ;; End Program
+      (outdent)
       (emit-end-program))))

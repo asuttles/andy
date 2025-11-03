@@ -189,8 +189,8 @@ Raises an error if the name is already defined in this scope."
 ;;; Variable Analysis
 (defun analyze-variable-decl (v)
   "V is variable-declaration node with var-symbol and var-type"
-  (let ((name (var-symbol v)) (type (var-type v)))
-    (let ((sym (make-abstract-symbol :name name :kind :var :type type :value nil)))
+  (let ((name (var-symbol v)) (type (var-type v)) (kind (var-kind v)) (addr (var-addr v)))
+    (let ((sym (make-abstract-symbol :name name :kind kind :type type :value addr)))
       (add-symbol sym))))
 
 ;;; Procedure Analysis
@@ -423,6 +423,7 @@ Raises an error if the name is already defined in this scope."
 ;;; Perform Symantic Analysis and Build Symbol Table
 (defun analyze-ast (ast)
   "Semantic analysis entry point."
+  (format t "Checking semantics .......")
   (setq *symbol-table* nil
 	*loop-stack* nil
 	*function-stack* nil)

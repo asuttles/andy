@@ -21,7 +21,7 @@
          (tokens  (tokenize source))
          (ast     (parse tokens)))
     (when (analyze-ast ast)
-      (format t "Semantic checks passed.~%"))
+      (format t "all checks passed.~%"))
     (emit-wasm ast watfile)
     (if (wat2wasm-available-p)
 	(compile-wat2wasm watfile)

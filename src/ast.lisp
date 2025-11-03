@@ -25,7 +25,7 @@
    :program-block
    :block-consts :block-vars :block-procs :block-funcs :block-body
    :const-symbol :const-value :const-type
-   :var-symbol :var-type
+   :var-symbol :var-type :var-kind :var-size :var-addr
    :proc-symbol :proc-body
    :func-symbol :func-params :func-type :func-body
    :funcall-symbol :funcall-binding :funcall-args
@@ -40,7 +40,7 @@
    :for-label :for-init :for-cont :for-iter :for-body
    :read-var
    :write-expr :write-nl
-   :id-symbol :id-binding :id-scope
+   :id-symbol :id-binding :id-scope :id-index
    :number-value
    :cond-lhs :cond-op :cond-rhs
    :binary-lhs :binary-op :binary-rhs
@@ -77,8 +77,13 @@
 
 (defclass variable-declaration (ast-node)
   ((symbol :initarg :symbol :accessor var-symbol)
-   (type   :initarg :type   :accessor var-type)))
-
+   (type   :initarg :type   :accessor var-type)
+   ;; Kind = :scalar or :array
+   (kind    :initarg :kind  :accessor var-kind :initform :scalar)
+   (size    :initarg :size  :accessor var-size :initform 1)
+   ;; Heap Address, if applicable
+   (address :initarg :addr  :accessor var-addr)))
+   
 (defclass procedure-declaration (ast-node)
   ((symbol :initarg :symbol :accessor proc-symbol)
    (body   :initarg :body  :accessor proc-body)))
@@ -147,7 +152,8 @@
    ;; Binding slot contains pointer to objects in symbol table
    (binding :initarg :binding :accessor id-binding :initform nil)
    ;; Scope is :local or :global
-   (scope   :initarg :scope   :accessor id-scope   :initform nil)))
+   (scope   :initarg :scope   :accessor id-scope   :initform nil)
+   (index   :initarg :index   :accessor id-index   :initform nil)))
 
 (defclass function-call (expression)
   ((symbol    :initarg :symbol  :accessor funcall-symbol)

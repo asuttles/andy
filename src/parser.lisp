@@ -47,7 +47,7 @@
 
 (defun get-integer-token (parser)
   "Consume a number token and return its value as an integer"
-  (let ((tok (expect-token parser :integer)))
+  (let ((tok (expect-token parser :int)))
     (parse-integer (token-lexeme tok))))
 
 (defun get-float-token (parser)
@@ -58,19 +58,29 @@
 ;;; String Literals ───────────────────────────────────────────────────
 
 ;;; Collection of all string literals found in source file
-(defparameter *string-literals* '())
+(defvar *string-literals* '())
 
 
 ;;; ─── Parse Statements  ────────────────────────────────────────────
 
 ;;; Assignment Statement
 (defun parse-assignment (parser)
-  (let* ((var-name (get-ident-token parser))
-	 (var-node (make-instance 'identifier :symbol var-name)))
-    (expect-token parser :assign)
-    (let ((expr (parse-expression parser)))
-      (expect-token parser :semicolon)
-      (make-instance 'assign-statement :var var-node :expr expr))))
+  (let ((var-name (get-ident-token parser))
+	(var-index nil))
+    ;; Parse Array
+    (when (eq (token-type (current-token parser)) :lbracket)
+      (progn
+	  (advance-token parser)	; consumme [
+	  (setf var-index (parse-expression parser))
+	(advance-token parser)))	; consumme ]
+    ;; Make AST Leaf - Variable or Array
+    (let ((var-node (make-instance 'identifier
+				   :symbol var-name
+				   :index var-index)))
+      (expect-token parser :assign)
+      (let ((expr (parse-expression parser)))
+	(expect-token parser :semicolon)
+	(make-instance 'assign-statement :var var-node :expr expr)))))
 
 ;;; Call Statement
 (defun parse-call (parser)
@@ -278,10 +288,21 @@ default: <statement>"
 		      :op :minus
 		      :expr (parse-factor parser)))
       (:ident				; Variable or Funcall 
-       (if (eq (token-type (next-token parser)) :lparen)
-	   (parse-funcall parser)
-	   (make-instance 'identifier
-			  :symbol (get-ident-token parser))))
+       (cond
+	 ;; ident - Function Call 
+	 ((eq (token-type (next-token parser)) :lparen)
+	  (parse-funcall parser))
+	 ;; ident - Array Reference 
+	 ((eq (token-type (next-token parser)) :lbracket)
+	  (make-instance 'identifier
+			 :symbol (get-ident-token parser)
+			 :index (prog2
+				    (advance-token parser)
+				    (parse-expression parser)
+				  (advance-token parser))))
+	 ;; ident - Variable Reference 
+	 (t (make-instance 'identifier
+			   :symbol (get-ident-token parser)))))
       (:int				; Integer Literal
        (make-instance 'number-literal
 		      :value (get-integer-token parser)
@@ -440,34 +461,38 @@ where the expression is formed by 'lhs OR rhs'."
 		      (expect-token parser :semicolon)
 		      (nreverse consts))))))))
 
-;;; Block - Variables - Integers
-(defun parse-integer-declarations (parser)
-  (when (eq (token-type (current-token parser)) :int)
+;;; Block - Variables - Integers or Floats
+(defun parse-variable-declarations (parser)
+  (let ((type (token-type (current-token parser))))
+  (when (member type '(:int :float))
     (advance-token parser)
     (let ((vars nil))
       (loop
-	(push (make-instance 'variable-declaration
-			     :symbol (get-ident-token parser)
-			     :type :int) vars)
-	(if (match-token parser :comma)
-	    (advance-token parser)
-	    (return (progn
-		      (expect-token parser :semicolon)
-		      (nreverse vars))))))))
-
-(defun parse-float-declarations (parser)
-  (when (eq (token-type (current-token parser)) :float)
-    (advance-token parser)
-    (let ((vars nil))
-      (loop
-	(push (make-instance 'variable-declaration
-			     :symbol (get-ident-token parser)
-			     :type :float) vars)
-	(if (match-token parser :comma)
-	    (advance-token parser)
-	    (return (progn
-		      (expect-token parser :semicolon)
-		      (nreverse vars))))))))
+	;; Process Arrays
+	(let ((kind :scalar)
+	      (size 1)
+	      (addr nil)
+	      (symbol (get-ident-token parser)))
+	  (if (eq (token-type (current-token parser)) :lbracket)
+	      (progn
+		(advance-token parser)
+		(setf size (get-integer-token parser))
+		(setf kind :array)
+		(setf addr (allocate-heap-memory (* 4 size)))
+		(expect-token parser :rbracket)))
+	  ;; Make ID Object 
+	  (push (make-instance 'variable-declaration
+			       :symbol symbol
+			       :type type
+			       :kind kind
+			       :size size
+			       :addr addr) vars)
+	  ;; Advance to Next ID
+	  (if (match-token parser :comma)
+	      (advance-token parser)
+	      (return (progn
+			(expect-token parser :semicolon)
+			(nreverse vars))))))))))
 
 ;;; Block - Procedures
 (defun parse-procedure-declarations (parser)
@@ -529,8 +554,8 @@ where the expression is formed by 'lhs OR rhs'."
 ;;; Program/Procedure Blocks
 (defun parse-block (parser)
   (let ((consts (parse-constant-declarations parser))
-        (ints   (parse-integer-declarations parser))
-	(flts   (parse-float-declarations parser))
+        (ints   (parse-variable-declarations parser))
+	(flts   (parse-variable-declarations parser))
         (procs  (parse-procedure-declarations parser))
 	(funcs  (parse-function-declarations parser))
         (body   (parse-statements parser)))
@@ -561,6 +586,8 @@ where the expression is formed by 'lhs OR rhs'."
 (defun parse (tokens)
   "Create parser data struct from TOKENS stream, and begin parsing"
   (format t "Parsing token stream...~%")
+  (initialize-memory)
+  (setf *string-literals* '())
   (let ((parser (make-parser :tokens tokens)))
     (parse-program parser)))
 
