@@ -1,7 +1,7 @@
 # ANDYC - Andy's PL/0+ Compiler written in Common Lisp
 
 This project is an implementation of a **PL/0 compiler** written in **Common Lisp**.
-The goal is to study compiler construction by following Wirth’s classic PL/0 language, while exploring modern backends such as **WebAssembly (WASM)**.
+The goal is to study compiler construction by implementing and extending Wirth’s classic PL/0 language, while exploring modern backends such as **WebAssembly (WASM)**.
 
 ## About PL/0
 
@@ -19,15 +19,19 @@ It is deliberately minimal, making it ideal for educational compiler projects.
 The language has been updated with:
   - C-style line comments (//).
   - 32-bit integer types.
+  - 64-bit floating point numbers.
   - Immutable ASCII strings.
   - if-then-else statements.
   - switch-case-default statements.
+  - c-style for loops.
   - Logical operators: and, or, xor
   - write and writeNL statements.
   - Loop break statements (break from while and switch)
-  - Functions
+  - True Functions with return types and parameters
+  - Fixed-length arrays
   
-  The language is becomming more Pascal and C-like in every new release.
+  The language is structured, procedural, strongly-typed,  and generally algol-like.  It is
+  evolving towards becomming somewhat more "c-like" in each new release.
   
 ### Example Program
 
@@ -66,7 +70,7 @@ end.
 
 src/
   main.lisp      ; Main program driver
-  ast.lisp       ; Abstract syntax tree (AST) definitions  
+  ast.lisp       ; Abstract syntax tree (AST) definitions
   lexer.lisp     ; Tokenizer for PL/0 source code
   parser.lisp    ; Recursive-descent parser for PL/0 grammar
   analyzer.lisp  : Symbol table generator and symantic checking

@@ -1,6 +1,11 @@
 (defpackage :andy.ast
   (:use :cl)
   (:export
+   ;; Abstract Symbols for Semantic Analysis
+   :make-abstract-symbol :abstract-symbol-name :abstract-symbol-kind
+   :abstract-symbol-type :abstract-symbol-value :abstract-symbol-params
+   :make-symbol-entry
+
    ;; Base classes
    :ast-node :statement :expression
 
@@ -47,6 +52,24 @@
    :unary-op :unary-expr))
 
 (in-package :andy.ast)
+
+
+(defstruct abstract-symbol
+  name					; string or symbol
+  kind					; :const, :var, :procedure
+  type					; Future Expansion
+  value					; for constants
+  params				; for procedures
+  )
+
+(defun make-symbol-entry (name kind &key type value params)
+  "Helper to create a symbol struct with the current scope level."
+  (make-abstract-symbol :name name
+			:kind kind
+			:type type
+			:value value
+			:params params))
+
 
 ;;; Base Classes for AST Nodes
 (defclass ast-node () ())

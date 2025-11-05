@@ -169,10 +169,16 @@
 		   (get-scope-string (id-scope expr)) (id-symbol expr)))))
     ;; Function Call
     ((typep expr 'function-call)
-     ;; Emit Function Arguments
-     (dolist (arg (funcall-args expr))
-       (emit-expression arg))
-     (format *stream* "~VTcall $~A~%" (get-ind) (funcall-symbol expr)))
+     (let ((sym (funcall-binding expr)))
+       ;; Emit Function Arguments
+       (dolist (arg (funcall-args expr))
+	 (emit-expression arg))
+       ;; Emit Function Statements
+       (if (eq (abstract-symbol-kind sym) :builtin)
+	   ;; Emit "Built-In" Function Statements 
+	   (funcall (abstract-symbol-value sym) *stream* (get-ind))
+	   ;; Emit User-Defined Function Call
+	   (format *stream* "~VTcall $~A~%" (get-ind) (funcall-symbol expr)))))
     ;; Binary Expression
     ((typep expr 'binary-expression)
      (emit-expression (binary-lhs expr))
@@ -323,25 +329,30 @@ for the WASM '<cond> br_if' style of looping."
 	    (lhs-scope (id-scope lhs-id))
 	    (lhs-sym   (id-binding lhs-id))
 	    (lhs-kind  (abstract-symbol-kind lhs-sym)))
-       (emit-expression rhs-expr)
        (if (eq lhs-kind :array)
 	   ;; Emit Array Target
 	   (progn
+	     (format *stream* "~VT;; Compute Address~%" (get-ind))
 	     (format *stream* "~VTi32.const ~A  ;; base~%"
 		     (get-ind) (abstract-symbol-value lhs-sym))
 	     (format *stream* "~VT                ;; index~%"
 		     (get-ind))
-	     (emit-expression (id-index lhs-id))
+	     (emit-expression (id-index lhs-id))	     
 	     (format *stream* "~VTi32.const ~A~%"
 		     (get-ind) (if (eq (abstract-symbol-type lhs-sym) :float)
 				   8 4))
 	     (format *stream* "~VTi32.mul~%" (get-ind))
 	     (format *stream* "~VTi32.add      ;; Base + offset~%" (get-ind))
-	     (format *stream* "~VTi32.store~%" (get-ind)))
+	     (format *stream* "~VT;; Value to Store in Memory~%" (get-ind))	     
+	     (emit-expression rhs-expr)
+	     (format *stream* "~VT~A.store~%" (get-ind)
+		     (get-wasm-type (abstract-symbol-type lhs-sym))))
 	   ;; Emit Variable Target
-	   (format *stream* "~VT~A.set $~A~%" (get-ind)
-		   (if (eq lhs-scope :local) "local" "global")
-		   (id-symbol lhs-id)))))
+	   (progn
+	     (emit-expression rhs-expr)
+	     (format *stream* "~VT~A.set $~A~%" (get-ind)
+		     (if (eq lhs-scope :local) "local" "global")
+		     (id-symbol lhs-id))))))
     ;; IF .. THEN statement
     ((typep stmnt-node 'if-statement)
      (let ((condition (if-cond stmnt-node))

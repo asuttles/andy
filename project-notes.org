@@ -5,14 +5,13 @@ ANDY COMPILER
 
 Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
-* Goals
+* Original Goals
 - Implement a PL/0 compiler with a real AST representation.
 - Support extensions later (floats, strings, richer functions).
-- Eventually target WebAssembly, starting with a stack-based VM backend.
-
+- Target WebAssembly, for a basic stack-based VM backend.
 * References
 - Wirth, Niklaus. Compiler construction. Germany: Addison-Wesley, 1996.
-* Keywords
+* Original Keywords
 - const
 - var
 - procedure
@@ -56,61 +55,107 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   digit  = "0" | "1" | ... | "9" .
     
 #+end_src
-* Updated PL/0+ EBNF
-#+begin_src pascal
+* Andy EBNF
+#+begin_src ebnf
 
   (* --- Lexical Elements --- *)
-  letter    = "A" | ... | "Z" | "a" | ... | "z" ;
-  digit     = "0" | ... | "9" ;
-  identifier= letter { letter | digit } ;
-  number    = digit { digit } ;
-
-  comment   = "//" { any-character - newline } newline ;
+  letter        = "A" | ... | "Z" | "a" | ... | "z" ;
+  digit         = "0" | ... | "9" ;
+  identifier    = letter { letter | digit | "_" } ;
+  integer       = digit { digit } ;
+  float         = digit { digit } "." digit { digit } ;
+  number        = float | integer ;
+  string-lit    = '"' { printable-character - '"' } '"' ;
+  comment       = "//" { any-character - newline } newline ;
 
   (* --- Program --- *)
-  program   = block "." ;
-
-  block     = [ constant-declarations ]
-              { variable-declaration }
-              { procedure-declaration }
-              statement ;
+  program       = "program" program-type block "." ;
+  program-type  = "int" | "float" | "void" ;
+  block         = [ constant-declarations ]
+                  { variable-declaration }
+                  { function-declaration }
+                  statement ;
 
   (* --- Declarations --- *)
   constant-declarations = "const" typed-const { "," typed-const } ";" ;
   typed-const           = type identifier "=" literal ;
 
-  variable-declaration  = type identifier { "," identifier } ";" ;
-  type                  = "int" | "float" | "bool" | "string" ;
-  	    
-  procedure-declaration = "procedure" identifier ";" block ";" ;
+  variable-declaration  = type var-list ";" ;
+  var-list              = var-decl { "," var-decl } ;
+  var-decl              = identifier [ "[" integer "]" ] ;
+  type                  = "int" | "float" | "string" ;
+  literal               = number | string-lit ;
+
+  (* --- Functions --- *)
+  function-declaration  = "fun" identifier "(" [ parameter-list ] ")"
+                          [ ":" type ]
+                          block ";" ;
+   
+  parameter-list        = parameter { "," parameter } ;
+  parameter             = type identifier ;
 
   (* --- Statements --- *)
-  statement = assignment
-            | call
-            | compound-statement
-            | if-statement
-            | while-statement
-            | ε ;
+  statement =
+        assignment
+      | call
+      | compound-statement
+      | if-statement
+      | while-statement
+      | for-statement
+      | switch-statement
+      | break-statement
+      | return-statement
+      | ε ;
 
-  assignment = identifier ":=" expression ";" ;
-  call       = "call" identifier ";" ;
+  assignment            = identifier [ "[" expression "]" ] ":=" expression ";" ;
+  call                  = identifier "(" [ argument-list ] ")" ";" ;
+  argument-list         = expression { "," expression } ;
 
-  compound-statement = "begin" statement { statement } "end" ;
+  compound-statement    = "begin" statement { statement } "end" ;
+  break-statement       = "break" ";" ;
+  return-statement      = "return" [ expression ] ";" ;
 
-  if-statement = "if" condition "then" statement ;
-  while-statement = "while" condition "do" statement ;
+
+  (* --- Flow Control --- *)
+  if-statement          = "if" condition "then" statement
+                          [ "else" statement ] ;
+
+  while-statement       = "while" condition "do" statement ;
+
+  for-statement         = "for" "(" [ assignment ] ";"
+                                   [ condition ] ";"
+                                   [ assignment ] ")"
+                          statement ;
+
+  switch-statement      = "switch" "(" expression ")"
+                          { case-clause }
+                          [ default-clause ]
+                          "end" ;
+
+  case-clause           = "case" integer ":" { statement } ;
+  default-clause        = "default" ":" { statement } ;
+         
 
   (* --- Conditions --- *)
   condition = expression relop expression ;
   relop     = "=" | "≠" | "<" | "≤" | ">" | "≥" ;
 
+    
   (* --- Expressions --- *)
-  expression = term { ("+" | "-") term } ;
-  term       = factor { ("*" | "/") factor } ;
-  factor     = identifier
-             | number
-             | "(" expression ")"
-             | ("+" | "-") factor ;   (* unary +/- *)
+  expression            = logical-term { ("or" | "xor") logical-term } ;
+  logical-term          = logical-factor { "and" logical-factor } ;
+  logical-factor        = simple-expression [ relop simple-expression ] ;
+
+  relop                 = "=" | "≠" | "<" | "≤" | ">" | "≥" ;
+
+  simple-expression     = term { ("+" | "-") term } ;
+  term                  = factor { ("*" | "/") factor } ;
+
+  factor                = identifier [ "[" expression "]" ]
+                        | number
+                        | string-lit
+                        | "(" expression ")"
+                        | ("+" | "-" | "not") factor ;
 #+end_src
 * Andy's WASM Runtime Memory Model
 ** Strategy
@@ -141,7 +186,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Changes from PL/0
 ** Stuff to Add
-+ Fixed=sized arrays
 + A foreach function
 + Variable-sized collection data structure  
 + Random number generator
@@ -151,7 +195,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Short-circuiting logic operators for flow control?
 + 'Not' unary operator
 + Struct/Record
-+ Cast floats/ints (f32.convert_i32_s)   int(x) or float(x)
++ Built-In Math Operators: sqrt, int2float, float2int, abs, pow, neg, min, max, ceil, floor
 + Test negative integers and floats
 + Bounds checking for array references and assigns
 *** Improved Error Messages
@@ -172,6 +216,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Break from while loops and switch-case statements
 + Function parameters and returns
 + Floating Point Numbers
++ Fixed=sized arrays
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

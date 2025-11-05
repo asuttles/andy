@@ -1,17 +1,10 @@
 (defpackage :andy.analyzer
-  (:use :cl :andy.ast :andy.runtime)
+  (:use :cl :andy.ast :andy.builtin)
   (:export
    :analyze-ast))
 
 (in-package :andy.analyzer)
 
-(defstruct abstract-symbol
-  name					; string or symbol
-  kind					; :const, :var, :procedure
-  type					; Future Expansion
-  value					; for constants
-  params				; for procedures
-  )
 
 (defvar *symbol-table* nil
   "A stack of scopes. Each scope is a list of symbols.
@@ -38,14 +31,6 @@ The list on top of the stack is the innermost scope.")
   (first *symbol-table*))
 
 ;;; ─── Symbol Creation and Insertion ────────────────────────────────
-
-(defun make-symbol-entry (name kind &key type value params)
-  "Helper to create a symbol struct with the current scope level."
-  (make-abstract-symbol :name name
-               :kind kind
-	       :type type
-               :value value
-               :params params))
 
 (defun add-symbol (sym)
   "Insert a SYMBOL object into the current (innermost) scope.
@@ -89,7 +74,9 @@ Raises an error if the name is already defined in this scope."
 ;;; Function Call Analysis
 (defun analyze-funcall (f)
   (let* ((name (funcall-symbol f))
-	 (symbol (lookup-symbol name)))
+	 (symbol (or
+		  (lookup-symbol name)	     ; User Defined Function 
+		  (lookup-builtin name))))   ; Built-In Function
     (setf (funcall-binding f) symbol)
     ;; Check function scope
     (unless symbol

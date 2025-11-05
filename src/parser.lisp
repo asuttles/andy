@@ -517,7 +517,7 @@ where the expression is formed by 'lhs OR rhs'."
 	  do (let ((type (prog1 (token-type (current-token parser))
 			   (advance-token parser)))
 		   (id (get-ident-token parser)))
-	       (unless (member type '(:int))
+	       (unless (member type '(:int :float))
 		 (error "Parse Error: param ~A has invalid type: ~A~%" id type))			
 	       (push (make-instance 'identifier
 				    :symbol id

@@ -1,0 +1,18 @@
+// Test Arrays
+program void
+
+int i;
+float j, k, m[5];
+
+begin
+  i := 3;
+ 
+  m[1] := 1.0;
+  m[2] := 2.0;
+  m[3] := 3.0;
+
+  k := int2float(i);
+
+  write "It Works!";
+  writeNL;
+end.
