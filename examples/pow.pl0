@@ -1,0 +1,22 @@
+// Test an algorithm for calculating raising a float to a power
+program float
+
+fun pow (float x, int i) :float
+   float sum;
+   begin
+      sum := 1.0;
+      
+      while i>0 do
+         begin
+            sum := sum * x;
+	    i := i - 1;
+	 end
+	 
+      return sum;
+    end
+
+
+// Main
+begin
+   return pow(5.0,3);
+end.   

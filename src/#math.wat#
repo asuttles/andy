@@ -1,0 +1,457 @@
+ (module
+
+ ;; Import fd_write from WASI
+ (import "wasi_snapshot_preview1" "fd_write"
+ (func $fd_write (param i32 i32 i32 i32) (result i32)))
+
+ ;; Memory: 1 page = 64 KiB
+ (memory (export "memory") 1)
+
+   ;; WASI IO RUNTIME  ────────────────────────────────────────────────────
+
+     ;; Constants for runtime headers and buffers
+     (global $runtime_headers i32 (i32.const 2048))
+     (global $runtime_buffers i32 (i32.const 2304))
+   
+   
+   ;; Write a string (ptr, len)
+   (func $write_string (param $ptr i32) (param $len i32)
+     (local $iov_ptr i32)
+     ;; iovec at runtime_headers
+     (local.set $iov_ptr (global.get $runtime_headers))
+   
+     ;; iov_base = ptr
+     (i32.store (local.get $iov_ptr) (local.get $ptr))
+     ;; iov_len = len
+     (i32.store (i32.add (local.get $iov_ptr) (i32.const 4)) (local.get $len))
+   
+     ;; call fd_write(fd=1, &iovec, 1, &nwritten)
+     (call $fd_write
+       (i32.const 1)                          ;; fd = stdout
+       (local.get $iov_ptr)                   ;; pointer to iovec array
+       (i32.const 1)                          ;; number of iovecs
+       (i32.add (local.get $iov_ptr) (i32.const 8)) ;; where to write nwritten
+     )
+     drop
+   )
+   
+     ;; export a newline printer
+     (func $write_newline
+       (call $write_string (i32.const 0) (i32.const 1)))
+   
+     ;; Write an i32 value
+     ;; This version writes digits to runtime_buffers as ASCII characters.
+     (func $write_i32 (param $n i32)
+       (local $buf i32) (local $p i32) (local $digit i32)
+       (local.set $buf (global.get $runtime_buffers))
+       (local.set $p (i32.add (local.get $buf) (i32.const 32))) ;; end of buffer
+   
+       (if (i32.eqz (local.get $n))
+           (then
+             (i32.store8 (i32.sub (local.get $p) (i32.const 1)) (i32.const 48))
+             (call $write_string (i32.sub (local.get $p) (i32.const 1)) (i32.const 1))
+           )
+           (else
+             (loop $digits
+               (local.set $digit (i32.rem_u (local.get $n) (i32.const 10)))
+               (local.set $n (i32.div_u (local.get $n) (i32.const 10)))
+               (i32.store8
+                 (i32.sub (local.get $p) (i32.const 1))
+                 (i32.add (local.get $digit) (i32.const 48)))
+               (local.set $p (i32.sub (local.get $p) (i32.const 1)))
+               (br_if $digits (i32.gt_u (local.get $n) (i32.const 0)))
+             )
+             ;; Write digits from p to end of buffer
+             (call $write_string (local.get $p)
+                                 (i32.sub
+                                   (i32.add (local.get $buf) (i32.const 32))
+                                   (local.get $p)))
+           )
+       )
+     )
+   
+     ;; Write a f64 value (approximate, prints 6 digits after the decimal point)
+     (func $write_f64 (param $x f64)
+       (local $intpart i32)
+       (local $fracpart f64)
+       (local $scaled i32)
+     
+       ;; Handle negative numbers
+       (if (f64.lt (local.get $x) (f64.const 0))
+           (then
+             ;; print '-'
+             (i32.store8 (global.get $runtime_buffers) (i32.const 45)) ;; '-'
+             (call $write_string (global.get $runtime_buffers) (i32.const 1))
+             (local.set $x (f64.neg (local.get $x)))
+           )
+       )
+     
+       ;; integer part
+       (local.set $intpart (i32.trunc_f64_s (local.get $x)))
+       (call $write_i32 (local.get $intpart))
+     
+       ;; print '.'
+       (i32.store8 (global.get $runtime_buffers) (i32.const 46)) ;; '.'
+       (call $write_string (global.get $runtime_buffers) (i32.const 1))
+     
+       ;; fractional part * 1_000_000
+       (local.set $fracpart
+         (f64.sub (local.get $x) (f64.convert_i32_s (local.get $intpart))))
+       (local.set $fracpart
+         (f64.mul (local.get $fracpart) (f64.const 1000000)))
+       (local.set $scaled (i32.trunc_f64_s (local.get $fracpart)))
+     
+       ;; print fractional digits (no zero padding)
+       (call $write_i32 (local.get $scaled))
+     )
+   
+     (data (i32.const 0) "\n")
+   
+   ;; END WASI IO RUNTIME  ────────────────────────────────────────────────
+   ;; ANDY MATH RUNTIME  ──────────────────────────────────────────────────
+
+   ;; 1/4 Sine Wave lookup table:
+   ;; f64 values for sin(x), 0 ≤ x ≤ π/2, step = 0.01 rad
+   ;; Table length = 158 entries (0–1.57 radians)
+   ;; Each entry is 8 bytes (f64), total = 1264 bytes
+   ;; Accuracy is within ~5×10⁻⁵ (≈ 0.003°)
+   ;; Base address = 4096 (0x1000)
+   (data (i32.const 4096)
+    "\00\00\00\00\00\00\00\00\9a\99\99\99\99\99\F1\3F\35\5E\BA\49\0C\02\02\40\D7\A3\70\3D\0A\D7\0A\40\CD\CC\CC\CC\CC\CC\14\40\8F\C2\F5\28\5C\8F\1E\40\29\5C\8F\C2\F5\28\27\40\9A\99\99\99\99\99\2F\40\52\B8\1E\85\EB\51\36\40\AE\47\E1\7A\14\AE\3B\40\D7\A3\70\3D\0A\D7\40\40\CD\CC\CC\CC\CC\CC\43\40\52\B8\1E\85\EB\51\46\40\9A\99\99\99\99\99\48\40\00\00\00\00\00\00\4A\40")
+
+   ;; X modulus 2pi
+   ;; This is a helper function for the trig functions,
+   ;; which should only operate over x between 0 and 2*pi
+   ;; WASM does not have a modulus operator, so this fixes that.
+   ;; x = x - floor(x / (2π)) * (2π)
+   (func $f64.mod2pi (param $x f64) (result f64)
+     (local $result f64)
+     local.get $x
+     local.get $x
+     f64.const 6.283185307179586
+     f64.div
+     f64.floor
+     f64.const 6.283185307179586
+     f64.mul
+     f64.sub
+     local.tee $result
+     f64.const 0
+     f64.lt
+     (if (result f64)
+       (then
+         local.get $result
+         f64.const 6.283185307179586
+         f64.add
+        ) (else
+         local.get $result
+        )
+     )
+   )
+
+
+   ;; SIN
+   ;; Calculate sin using 1/4 sin-wave lookup table
+   ;;   sin(x) = sin(x)               for 0 ≤ x ≤ π/2
+   ;;   sin(x) = sin(π - x)           for π/2 ≤ x ≤ π
+   ;;   sin(x) = -sin(x - π)          for π ≤ x ≤ 3π/2
+   ;;   sin(x) = -sin(2π - x)         for 3π/2 ≤ x ≤ 2π
+   ;;
+   ;; Uses linear interpolation between table entries
+   (func $sin (param $x f64) (result f64)
+   
+     (local $idx i32)           ;; Table Index
+     (local $frac f64)          ;; % between v1 and v2
+     (local $v1 f64)            ;; Lower Table Value
+     (local $v2 f64)            ;; Upper Table Value
+     (local $val f64)           ;; Interpolated value
+     (local $neg i32)           ;; Neg portion of wave?
+   
+     ;; normalize x into [0, 2π)
+     local.get $x
+     call $f64.mod2pi     
+     local.set $x
+
+     ;; Determine quadrant and mirror if needed
+     (if (f64.gt (local.get $x) (f64.const 4.71238898)) ;; > 3π/2
+       (then
+         f64.const 6.283185307179586
+         local.get $x
+         f64.sub
+         local.set $x
+         i32.const -1
+         local.set $neg))
+     (if (f64.gt (local.get $x) (f64.const 3.1415926535)) ;; > π
+       (then
+         local.get $x
+         f64.const 3.1415926535
+         f64.sub
+         local.set $x
+         i32.const -1
+         local.set $neg))
+     (if (f64.gt (local.get $x) (f64.const 1.57079632679)) ;; > π/2
+       (then
+         f64.const 3.1415926535
+         local.get $x
+         f64.sub
+         local.set $x))
+   
+     ;; index = floor(x / 0.01)
+     local.get $x
+     f64.const 100
+     f64.mul
+     i32.trunc_f64_s
+     local.set $idx
+
+     ;; fractional offset
+     local.get $x
+     f64.const 0.01
+     f64.div
+     f64.floor
+     f64.const 0.01
+     f64.mul
+     local.get $x
+     f64.sub
+     f64.const 100
+     f64.mul
+     local.set $frac
+
+     ;; v1 = table[idx]
+     local.get $idx
+     i32.const 8
+     i32.mul
+     i32.const 4096
+     i32.add
+     f64.load
+     local.set $v1
+
+     ;; v2 = table[idx+1]
+     local.get $idx
+     i32.const 1
+     i32.add
+     i32.const 8
+     i32.mul
+     i32.const 4096
+     i32.add
+
+     call $write_i32
+
+     local.get $idx
+     i32.const 1
+     i32.add
+     i32.const 8
+     i32.mul
+     i32.const 4096
+     i32.add
+     f64.load
+     local.set $v2
+
+     ;; val = v1 + (v2 - v1) * frac  (linear interpolation)
+     local.get $v2
+     local.get $v1
+     f64.sub
+     local.get $frac
+     f64.mul
+     local.get $v1
+     f64.add
+     local.set $val
+   
+     ;; Apply sign if needed
+     (if (i32.eq (local.get $neg) (i32.const -1))
+       (then
+         local.get $val
+         f64.neg
+         return))
+   
+     local.get $val)
+
+   ;; COS
+   ;; The cosine is calculated from a
+   ;; π/2 phase shifted sin
+   (func $cos (param $x f64) (result f64)
+     local.get $x
+     f64.const 1.57079632679  ;; π/2
+     f64.add
+     call $sin)
+   
+   ;; TAN
+   ;; The tangent is the ratio of sin/cos
+   (func $tan (param $x f64) (result f64)
+     local.get $x
+     call $sin
+     local.get $x
+     call $cos
+     f64.div)
+
+   ;; EXP
+   ;; Implements e^x
+   ;; Solved by a 5 term taylor series expansion
+   ;; gives ~1e-5 accuracy for |x| ≤ 5
+   ;; Can be unrolled for speedup
+   ;; Additional iterations can be added for increased accuracy
+   (func $exp (param $x f64) (result f64)     
+
+     ;; Compute exp(x) ≈ 1 + x + x²/2! + x³/3! + x⁴/4! + x⁵/5!
+     (local $term f64)        ;; (x^n)/n!
+     (local $sum f64)         ;; running sum
+     (local $n f64)           ;; the current n
+     
+     f64.const 1.0
+     local.set $sum		;; sum = 1.0
+     f64.const 1.0
+     local.set $term            ;; term = 1.0
+     f64.const 1.0
+     local.set $n		;; n = 1.0
+
+     ;; Compute successive taylor terms
+     (loop $loop
+
+       ;; term += x / n
+       local.get $term
+       local.get $x
+       f64.mul
+       local.get $n
+       f64.div
+       local.set $term
+
+       ;; sum += term
+       local.get $sum
+       local.get $term
+       f64.add
+       local.set $sum
+
+       ;; n++
+       local.get $n
+       f64.const 1.0
+       f64.add
+       local.set $n
+ 
+       ;; stop after i > 5
+       local.get $n
+       f64.const 5.0
+       f64.le
+       br_if $loop
+     )
+ 
+     local.get $sum
+   )
+
+   ;; LN
+   ;; Newtwon-Raphson Method
+   ;; Error is ~1e-3 for x <= 10
+   ;; Additional unrolled loops can be added for increased accuracy
+   (func $ln (param $x f64) (result f64)
+     ;; ln(x) via Newton iteration:
+     ;; y₀ = x - 1
+     ;; repeat twice: y = y + 2*(x - exp(y)) / (x + exp(y))
+     (local $y f64)		;; the current y
+     (local $ey f64)		;; e^y
+     (local $num f64)		;; numerator: 2*(x - exp(y)) 
+     (local $den f64)		;; denominator:  x + exp(y)
+ 
+     local.get $x
+     f64.const 1.0
+     f64.sub
+     local.set $y ;; initial guess
+
+     ;; Unrolled i=2 loop for speed...
+
+     ;; iteration 1
+     local.get $y
+     call $exp
+     local.set $ey
+     local.get $x
+     local.get $ey
+     f64.sub
+     f64.const 2.0
+     f64.mul
+     local.set $num
+     local.get $x
+     local.get $ey
+     f64.add
+     local.set $den
+     local.get $num
+     local.get $den
+     f64.div
+     local.get $y
+     f64.add
+     local.set $y
+ 
+     ;; iteration 2
+     local.get $y
+     call $exp
+     local.set $ey
+     local.get $x
+     local.get $ey
+     f64.sub
+     f64.const 2.0
+     f64.mul
+     local.set $num
+     local.get $x
+     local.get $ey
+     f64.add
+     local.set $den
+     local.get $num
+     local.get $den
+     f64.div
+     local.get $y
+     f64.add
+     local.set $y
+ 
+     local.get $y
+   )
+
+   ;; POW
+   ;; pow(x,y) = x^y
+   ;; where:
+   ;;    x^y = e^(y*ln(x))
+   ;; for:
+   ;;    x > 0.0
+   (func $pow (param $x f64) (param $y f64) (result f64)
+     (local $tmp f64)
+   
+     local.get $x
+     f64.const 0.0
+     f64.le
+     ;; if x <= 0.0, return 0.0
+     (if (result f64)
+         (then (f64.const 0.0))
+     ;; otherwise, return exp(y*ln(x))
+         (else
+           ;; tmp = ln(x)
+           local.get $x
+           call $ln
+           local.set $tmp
+   
+           ;; tmp = y * ln(x)
+           local.get $y
+           local.get $tmp
+           f64.mul
+           local.set $tmp
+   
+           ;; return exp(y * ln(x))
+           local.get $tmp
+           call $exp
+         )
+     )
+   )
+
+   ;; END MATH RUNTIME  ───────────────────────────────────────────────────
+
+  (global $PI f64 (f64.const 3.141592))
+  (global $i (mut i32) (i32.const 0))
+  (global $n (mut f64) (f64.const 0.0))
+
+  (func $main (export "_start") (result f64)
+  (local $_result f64)
+
+  (block $return
+        global.get $PI
+        f64.const 1.95
+	f64.div
+        call $sin
+        local.set $_result
+        br $return
+    )  ;; End Return Block
+    local.get $_result
+  )
+ )

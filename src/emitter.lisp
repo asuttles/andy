@@ -86,6 +86,11 @@
 (defun emit-program ()
   "Emit Module Header and WASI IO Runtime"
   (format *stream* "~VT(module~%~%" (get-ind))
+  (format *stream* "~VT;; Import fd_write from WASI~%" (get-ind))
+  (format *stream* "~VT(import \"wasi_snapshot_preview1\" \"fd_write\"~%" (get-ind))
+  (format *stream* "~VT(func $fd_write (param i32 i32 i32 i32) (result i32)))~%~%" (get-ind))
+  (format *stream* "~VT;; Memory: 1 page = 64 KiB~%" (get-ind))
+  (format *stream* "~VT(memory (export \"memory\") 1)~%~%" (get-ind))
   (format *stream* "~A" (get-runtime)))
 
 (defun emit-string (str)
@@ -133,10 +138,10 @@
        (format *stream* "~VT~A.mul~%" (get-ind) wtyp))
       ;; /
       ((eq op :divide)
-       (format *stream* "~VT~A.div_s~%" (get-ind) wtyp))
+       (format *stream* "~VT~A.div~%" (get-ind) wtyp))
       ;; %
       ((eq op :modulo)
-       (format *stream* "~VT~A.rem_s~%" (get-ind) wtyp)))))
+       (format *stream* "~VT~A.rem~%" (get-ind) wtyp)))))
 
 ;;; Emit Expressions
 (defun emit-expression (expr)
@@ -418,7 +423,8 @@ for the WASM '<cond> br_if' style of looping."
        (t 
 	(progn
 	  (emit-expression (write-expr stmnt-node))
-	  (format *stream* "~VTcall $write_i32~%" (get-ind))))))
+	  (format *stream* "~VTcall $write_~A~%" (get-ind)
+		  (get-wasm-type (expr-type (write-expr stmnt-node))))))))
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
      (format *stream* "~VTcall $~A~%" (get-ind) (call-proc-name stmnt-node)))

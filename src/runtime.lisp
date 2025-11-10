@@ -3,12 +3,22 @@
   (:export :initialize-memory
    :get-runtime
    :allocate-constant-memory
-   :allocate-heap-memory))
+   :allocate-heap-memory
+   :import-math))
 
 (in-package :andy.runtime)
 
 (defparameter *io-runtime*
   (uiop:read-file-string "~/programming/lisp/andy/inc/io.wat"))
+(defparameter *math-runtime*
+  (uiop:read-file-string "~/programming/lisp/andy/inc/math.wat"))
+
+(defvar *import-math-p* nil)
+(defvar *import-io-p* t)
+
+(defun import-math ()
+  (unless *import-math-p*
+    (setf *import-math-p* t)))
 
 (defparameter *memory-map*
   '((:const-base        . #x0000)
@@ -30,7 +40,15 @@
   (cdr (assoc key *memory-map*)))
 
 (defun get-runtime ()
-  *io-runtime*)
+  (let ((output ""))
+    (dolist (runtime
+	     '((*import-io-p* *io-runtime*)
+	       (*import-math-p* *math-runtime*)))
+      (if (symbol-value (car runtime))
+	  (setf output
+		(concatenate 'string output
+			     (symbol-value (cadr runtime))))))
+    output))
 
 (defun allocate-constant-memory (size)
   (prog1

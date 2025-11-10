@@ -447,6 +447,7 @@ where the expression is formed by 'lhs OR rhs'."
 		(let ((val
 			(case type
 			  (:int (get-integer-token parser))
+			  (:float (get-float-token parser))
 			  (:string (prog1
 				       (token-lexeme (current-token parser))
 				     (advance-token parser))))))
@@ -513,19 +514,27 @@ where the expression is formed by 'lhs OR rhs'."
 ;;; Block - Function Parameters
 (defun parse-function-params (parser)
   (let ((params nil))
-    (loop until (match-token parser :rparen)
-	  do (let ((type (prog1 (token-type (current-token parser))
-			   (advance-token parser)))
-		   (id (get-ident-token parser)))
-	       (unless (member type '(:int :float))
-		 (error "Parse Error: param ~A has invalid type: ~A~%" id type))			
-	       (push (make-instance 'identifier
-				    :symbol id
-				    :type type)
-		     params)))
+    (loop until (eq (token-type (current-token parser)) :rparen)
+      do (let ((type (prog1
+			 (token-type (current-token parser))
+		       (advance-token parser)))
+	       (id (get-ident-token parser)))
+	   (unless (member type '(:int :float))
+	     (error "Parse Error: param ~A has invalid type: ~A~%" id type))
+	   (push (make-instance 'identifier
+				:symbol id
+				:type type)
+		 params))
+	 (let* ((tok (current-token parser))
+		(typ (token-type tok)))
+	   (unless (member typ '(:comma :rparen))
+	     (error "Parse Error: Expected comma or paren and received a ~A~%."
+		    (token-lexeme tok)))
+	   (if (eq typ :comma)
+	       (advance-token parser))))
     (nreverse params)))
+			 
 
-	     
 ;;; Block - Functions
 (defun parse-function-declarations (parser)
   (let ((funcs nil))

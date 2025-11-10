@@ -1,0 +1,7 @@
+// Clear Screen
+program void
+
+begin
+   write "\1b[2J\1b[H";
+   write "Screen Cleared";
+end.

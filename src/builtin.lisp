@@ -1,51 +1,42 @@
 (defpackage :andy.builtin
-  (:use :cl :andy.ast)
+  (:use :cl :andy.ast :andy.runtime)
   (:export
    :lookup-builtin
+   :import-math-p
    ))
 
 (in-package :andy.builtin)
 
 (defparameter *builtins*
-  '(("sqrt"      :params (:float)        :type :float :emitter emit-sqrt)
-    ("int2float" :params (:int)          :type :float :emitter emit-int-to-float)
-    ("float2int" :params (:float)        :type :int   :emitter emit-float-to-int)
-    ("abs"       :params (:float)        :type :float :emitter emit-abs)
-    ;;("pow"       :params (:float :float) :type :float :emitter emit-pow)
-    ("neg"       :params (:float)        :type :float :emitter emit-neg)
-    ("min"       :params (:float :float) :type :float :emitter emit-min)
-    ("max"       :params (:float :float) :type :float :emitter emit-min)
-    ("ceil"      :params (:float)        :type :float :emitter emit-ceil)
-    ("floor"     :params (:float)        :type :float :emitter emit-floor)))
+  '(("sqrt"      :params (:float)        :type :float :emitter emit-sqrt  :import nil)
+    ("int2float" :params (:int)          :type :float :emitter emit-int-to-float :import nil)
+    ("float2int" :params (:float)        :type :int   :emitter emit-float-to-int :import nil)
+    ("abs"       :params (:float)        :type :float :emitter emit-abs   :import nil)
+    ("neg"       :params (:float)        :type :float :emitter emit-neg   :import nil)
+    ("min"       :params (:float :float) :type :float :emitter emit-min   :import nil)
+    ("max"       :params (:float :float) :type :float :emitter emit-max   :import nil)
+    ("ceil"      :params (:float)        :type :float :emitter emit-ceil  :import nil)
+    ("floor"     :params (:float)        :type :float :emitter emit-floor :import nil)
+    ("pow"       :params (:float :float) :type :float :emitter emit-pow   :import import-math)    
+    ("sin"       :params (:float)        :type :float :emitter emit-sin   :import import-math)
+    ("cos"       :params (:float)        :type :float :emitter emit-cos   :import import-math)
+    ("tan"       :params (:float)        :type :float :emitter emit-tan   :import import-math)
+    ("exp"       :params (:float)        :type :float :emitter emit-exp   :import import-math)
+    ("ln"        :params (:float)        :type :float :emitter emit-ln    :import import-math)))
 
-;;; (defvar *wasi-imports* '())
-
-;;;(defun wasm-type (type)
-;;;  (ecase type
-;;;    (:int "i32")
-;;;    (:float "f64")
-;;;    (:void "")))
 
 (defun get-builtin-func (name)
   (cdr (assoc name *builtins* :test #'string=)))
 
-;;;(defun emit-wasi-imports (stream)
-;;;  (dolist (name *wasi-imports*)
-;;;    (let ((func (get-builtin-func name))
-;;;	  (params ""))
-;;;      ;; Import only WASI-defined Functions
-;;;      (when (getf func :wasi-p))
-;;;	(dolist (p (getf func :params))
-;;;	  (setf params (format nil "~A (param ~A) " params (wasm-type p))))
-;;;	(format stream "(import \"env\" \"~A\" (func $~A ~A (result ~A)))~%"
-;;;		name name params (wasm-type (getf func :type)))))))
-
 (defun lookup-builtin (name)
   "Lookup NAME in built-in library and return symbol structure, if found"
-  (let ((func (get-builtin-func name)))
+  (let* ((func (get-builtin-func name))
+	 (import (getf func :import)))
     (when func
       (progn
-	;;	(pushnew name *wasi-imports*)	; Record all imported built-ins
+	;; If func not in wasm, import a runtime
+	(if import (funcall import))
+	;; Make built-in funcall node
 	(make-symbol-entry
 	 name :builtin
 	 :type (getf func :type)
@@ -54,6 +45,7 @@
 		  (lambda (type)
 		    (make-instance 'andy.ast:identifier :symbol name :type type))
 		  (getf func :params)))))))
+
 
 ;;; Code Emitters - Math Functions
 (defun emit-sqrt (stream offset)
@@ -82,4 +74,22 @@
 
 (defun emit-float-to-int (stream offset)
   (format stream "~VTi32.trunc_f64_s~%" offset))
+
+(defun emit-exp (stream offset)
+  (format stream "~VTcall $exp~%" offset))
+
+(defun emit-ln (stream offset)
+  (format stream "~VTcall $ln~%" offset))
+
+(defun emit-sin (stream offset)
+  (format stream "~VTcall $sin~%" offset))
+
+(defun emit-cos (stream offset)
+  (format stream "~VTcall $cos~%" offset))
+
+(defun emit-tan (stream offset)
+  (format stream "~VTcall $tan~%" offset))
+
+(defun emit-pow (stream offset)
+  (format stream "~VTcall $pow~%" offset))
 

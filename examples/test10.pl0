@@ -13,6 +13,6 @@ begin
 
   k := int2float(i);
 
-  write "It Works!";
+  write sin(k);
   writeNL;
 end.
