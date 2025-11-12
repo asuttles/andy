@@ -293,6 +293,10 @@ Raises an error if the name is already defined in this scope."
     ((typep stmt 'call-statement)
      (analyze-call stmt))
 
+    ;; Function Call Statement
+    ((typep stmt 'function-call)
+     (analyze-funcall stmt))
+    
     ;; Return Statement
     ((typep stmt 'return-statement)
      (analyze-return stmt))

@@ -217,6 +217,43 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Function parameters and returns
 + Floating Point Numbers
 + Fixed=sized arrays
++ Floating Point Math operations (pow, sin, cos, ln, exp, abs, sqrt, floor, ceil)  
+* WASM Terminal Escape Codes Table
+
+|-------------+--------+----------------------------+----------------------------|
+| Memory Loc. | Length | Symbol                     | Description                |
+|-------------+--------+----------------------------+----------------------------|
+|           0 |      1 | ESC_NEWLINE                | Newline character "\n"     |
+|           1 |      7 | ESC_CLEAR_SCREEN           | Clear screen & home cursor |
+|           8 |      3 | ESC_CURSOR_HOME            | Cursor to home             |
+|          11 |      6 | ESC_HIDE_CURSOR            | Hide cursor                |
+|          17 |      6 | ESC_SHOW_CURSOR            | Show cursor                |
+|          23 |      4 | ESC_RESET_STYLE            | Reset all attributes       |
+|          27 |      4 | ESC_BOLD                   | Bold text                  |
+|          31 |      4 | ESC_ITALIC                 | Italic text                |
+|          35 |      4 | ESC_UNDERLINE              | Underline text             |
+|          39 |      5 | ESC_BLACK_FG               | Foreground black           |
+|          44 |      5 | ESC_RED_FG                 | Foreground red             |
+|          49 |      5 | ESC_GREEN_FG               | Foreground green           |
+|          54 |      5 | ESC_YELLOW_FG              | Foreground yellow          |
+|          59 |      5 | ESC_BLUE_FG                | Foreground blue            |
+|          64 |      5 | ESC_MAGENTA_FG             | Foreground magenta         |
+|          69 |      5 | ESC_CYAN_FG                | Foreground cyan            |
+|          74 |      5 | ESC_WHITE_FG               | Foreground white           |
+|          79 |      5 | ESC_BLACK_BG               | Background black           |
+|          84 |      5 | ESC_RED_BG                 | Background red             |
+|          89 |      5 | ESC_GREEN_BG               | Background green           |
+|          94 |      5 | ESC_YELLOW_BG              | Background yellow          |
+|          99 |      5 | ESC_BLUE_BG                | Background blue            |
+|         104 |      5 | ESC_MAGENTA_BG             | Background magenta         |
+|         109 |      5 | ESC_CYAN_BG                | Background cyan            |
+|         114 |      5 | ESC_WHITE_BG               | Background white           |
+|         119 |      3 | ESC_CLEAR_LINE_FROM_CURSOR | Clear to end of line       |
+|         122 |      4 | ESC_CLEAR_LINE             | Clear entire line          |
+|         126 |      9 | ESC_SET_TITLE              | Set terminal title         |
+|-------------+--------+----------------------------+----------------------------|
+|             |        | **TOTAL BYTES:** 140       | **Next free offset: 140**  |
+
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure

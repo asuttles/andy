@@ -7,6 +7,7 @@
 
 (in-package :andy.builtin)
 
+;; Summary of Built-In Functions
 (defparameter *builtins*
   '(("sqrt"      :params (:float)        :type :float :emitter emit-sqrt  :import nil)
     ("int2float" :params (:int)          :type :float :emitter emit-int-to-float :import nil)
@@ -22,7 +23,41 @@
     ("cos"       :params (:float)        :type :float :emitter emit-cos   :import import-math)
     ("tan"       :params (:float)        :type :float :emitter emit-tan   :import import-math)
     ("exp"       :params (:float)        :type :float :emitter emit-exp   :import import-math)
-    ("ln"        :params (:float)        :type :float :emitter emit-ln    :import import-math)))
+    ("ln"        :params (:float)        :type :float :emitter emit-ln    :import import-math)
+    ("cls"       :params ()              :type :void  :emitter emit-cls   :import nil)))
+
+;; Memory Locations for Terminal Escape Sequences
+(defparameter *escapes*
+  '(
+    :newline                  (0   1)
+    :clear-screen             (1   7)
+    :cursor-home              (8   3)
+    :hide-cursor              (11  6)
+    :show-cursor              (17  6)
+    :reset-style              (23  4)
+    :bold                     (27  4)
+    :italic                   (31  4)
+    :underline                (35  4)
+    :black-fg                 (39  5)
+    :red-fg                   (44  5)
+    :green-fg                 (49  5)
+    :yellow-fg                (54  5)
+    :blue-fg                  (59  5)
+    :magenta-fg               (64  5)
+    :cyan-fg                  (69  5)
+    :white-fg                 (74  5)
+    :black-bg                 (79  5)
+    :red-bg                   (84  5)
+    :green-bg                 (89  5)
+    :yellow-bg                (94  5)
+    :blue-bg                  (99  5)
+    :magenta-bg               (104 5)
+    :cyan-bg                  (109 5)
+    :white-bg                 (114 5)
+    :clear-line-from-cursor   (119 3)
+    :clear-line               (122 4)
+    :set-title                (126 9)
+  ))
 
 
 (defun get-builtin-func (name)
@@ -92,4 +127,17 @@
 
 (defun emit-pow (stream offset)
   (format stream "~VTcall $pow~%" offset))
+
+
+;;; Emit Terminal Escape Sequences
+
+(defun emit-term-esc (esc name stream indent)
+  (format stream "~VT;; write ~A~%" indent name)
+  (format stream "~VTi32.const ~A   ;; offset~%" indent (first esc))
+  (format stream "~VTi32.const ~A   ;; length~%" indent (second esc))
+  (format stream "~VTcall $write_string~%" indent))
+
+
+(defun emit-cls (stream offset)
+  (emit-term-esc (getf *escapes* :clear-screen) "Clear Screen" stream offset))
 

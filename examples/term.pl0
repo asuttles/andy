@@ -1,0 +1,5 @@
+program void
+
+begin
+   cls();
+end.

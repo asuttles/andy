@@ -82,6 +82,17 @@
 	(expect-token parser :semicolon)
 	(make-instance 'assign-statement :var var-node :expr expr)))))
 
+;;; Parse Identity (assignment or function call)
+(defun parse-identity (parser)
+  (let ((next (next-token parser)))    
+    (case (token-type next)
+      (:assign   (parse-assignment parser))     ; Variable Assignment
+      (:lparen   (prog1 (parse-funcall parser)	; Function Call 
+                   (expect-token parser :semicolon)))
+      (:lbracket (parse-assignment parser))     ; Array Assignment
+      (t (error "Parse Error: Unexpected token ~A at line ~A, column ~A.~%"
+		(token-lexeme next) (token-line next) (token-column next))))))
+
 ;;; Call Statement
 (defun parse-call (parser)
   (expect-token parser :call)
@@ -241,7 +252,7 @@ default: <statement>"
 (defun parse-statements (parser)
   (let ((tok (current-token parser)))
     (case (token-type tok)
-      (:ident   (parse-assignment parser))
+      (:ident   (parse-identity parser))
       (:call    (parse-call parser))
       (:return  (parse-return parser))
       (:begin   (parse-begin-block parser))
@@ -595,7 +606,7 @@ where the expression is formed by 'lhs OR rhs'."
 (defun parse (tokens)
   "Create parser data struct from TOKENS stream, and begin parsing"
   (format t "Parsing token stream...~%")
-  (initialize-memory)
+  (initialize-runtime)
   (setf *string-literals* '())
   (let ((parser (make-parser :tokens tokens)))
     (parse-program parser)))

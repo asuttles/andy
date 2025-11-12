@@ -428,6 +428,10 @@ for the WASM '<cond> br_if' style of looping."
     ;; Call Procedure Statement
     ((typep stmnt-node 'call-statement)
      (format *stream* "~VTcall $~A~%" (get-ind) (call-proc-name stmnt-node)))
+    ;; Function Call Statements
+    ((typep stmnt-node 'function-call)
+     (funcall (abstract-symbol-value
+	       (funcall-binding stmnt-node)) *stream* (get-ind)))
     ;; Return Statement
     ((typep stmnt-node 'return-statement)
      (emit-expression (return-expr stmnt-node))

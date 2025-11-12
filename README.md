@@ -29,7 +29,8 @@ The language has been updated with:
   - Loop break statements (break from while and switch)
   - True Functions with return types and parameters
   - Fixed-length arrays
-  
+  - Basic floating point mathematical operations
+
   The language is structured, procedural, strongly-typed,  and generally algol-like.  It is
   evolving towards becomming somewhat more "c-like" in each new release.
   
@@ -76,6 +77,7 @@ src/
   analyzer.lisp  : Symbol table generator and symantic checking
   runtime.lisp   : Emit runtime functions to WAT output file
   emitter.lisp   ; Code generator for IR / WASM
+  builtin.lisp   : Code emitter for built-in functions
 
 inc/
   io.wat         : IO Runtime Functions in WAT format

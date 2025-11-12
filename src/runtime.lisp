@@ -1,6 +1,6 @@
 (defpackage :andy.runtime
   (:use :cl)
-  (:export :initialize-memory
+  (:export :initialize-runtime
    :get-runtime
    :allocate-constant-memory
    :allocate-heap-memory
@@ -8,11 +8,9 @@
 
 (in-package :andy.runtime)
 
-(defparameter *io-runtime*
-  (uiop:read-file-string "~/programming/lisp/andy/inc/io.wat"))
-(defparameter *math-runtime*
-  (uiop:read-file-string "~/programming/lisp/andy/inc/math.wat"))
-
+;; Initial Runtime State
+(defvar *io-runtime* "")
+(defvar *math-runtime* "")
 (defvar *import-math-p* nil)
 (defvar *import-io-p* t)
 
@@ -28,13 +26,19 @@
     (:heap-base         . #x1000)
     (:stack-top         . #xF000)))
 
-(defvar *constant-offset* 1)	; Offset 0 reserved for /n
+;; 140 bytes reserved for termainal escape sequences
+(defconstant *CONST-MEMORY* 140)
+(defvar *constant-offset* *CONST-MEMORY*)
 (defvar *heap-offset* 0)
 
-(defun initialize-memory ()
+(defun initialize-runtime ()
   "Re-initialize memory to initial conditions."
-  (setf *constant-offset* 1
-	*heap-offset* 0))
+  (setf *constant-offset* *CONST-MEMORY*
+	*heap-offset* 0
+	*io-runtime* (uiop:read-file-string "~/programming/lisp/andy/inc/io.wat")
+	*math-runtime* (uiop:read-file-string "~/programming/lisp/andy/inc/math.wat")
+	*import-math-p* nil
+	*import-io-p* t))
 
 (defun get-addr (key)
   (cdr (assoc key *memory-map*)))
