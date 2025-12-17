@@ -24,7 +24,11 @@
     ("tan"       :params (:float)        :type :float :emitter emit-tan   :import import-math)
     ("exp"       :params (:float)        :type :float :emitter emit-exp   :import import-math)
     ("ln"        :params (:float)        :type :float :emitter emit-ln    :import import-math)
-    ("cls"       :params ()              :type :void  :emitter emit-cls   :import nil)))
+    ("cls"       :params ()              :type :void  :emitter emit-cls   :import nil)
+    ("curH"      :params ()              :type :void  :emitter emit-hide  :import nil)
+    ("curS"      :params ()              :type :void  :emitter emit-show  :import nil)
+    ("bold"      :params ()              :type :void  :emitter emit-bold  :import nil)
+    ("reset"     :params ()              :type :void  :emitter emit-reset :import nil)))
 
 ;; Memory Locations for Terminal Escape Sequences
 (defparameter *escapes*

@@ -188,9 +188,10 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 ** Stuff to Add
 + A foreach function
 + Variable-sized collection data structure  
++ Variable terminal commands (title, goto, etc)
 + Random number generator
 + Read statement
-+ Command line switches
++ Command line switch management
   - debug, target, listing, assembler
 + Short-circuiting logic operators for flow control?
 + 'Not' unary operator
@@ -218,7 +219,8 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 + Floating Point Numbers
 + Fixed=sized arrays
 + Floating Point Math operations (pow, sin, cos, ln, exp, abs, sqrt, floor, ceil)  
-* WASM Terminal Escape Codes Table
++ Termainl Commands (cls)
+* Terminal Escape Codes in WASM Runtime Table
 
 |-------------+--------+----------------------------+----------------------------|
 | Memory Loc. | Length | Symbol                     | Description                |
@@ -264,6 +266,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 ├── img
 │   └── screenshot1.png
 ├── inc
+│   ├── math.io
 │   └── io.wat
 ├── package.lisp
 ├── proj_struct.txt
@@ -275,17 +278,9 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 │   ├── lexer.lisp
 │   ├── main.lisp
 │   ├── parser.lisp
+│   ├── builtin.lisp
 │   └── runtime.lisp
-└── tests
-    ├── euler1.pl0
-    ├── euler2.pl0
-    ├── euler3.pl0
-    ├── fac.pl0
-    ├── fizzbuzz.pl0
-    ├── string.pl0
-    ├── summation.pl0
-    ├── test1.pl0
-    ├── test2.pl0
-    └── test3.pl0
+└── examples
+    └── *.pl0
 * WASM Notes
 - [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

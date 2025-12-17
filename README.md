@@ -1,4 +1,4 @@
-# ANDYC - Andy's PL/0+ Compiler written in Common Lisp
+# ANDY - Andy's PL/0+ Compiler Written in Common Lisp
 
 This project is an implementation of a **PL/0 compiler** written in **Common Lisp**.
 The goal is to study compiler construction by implementing and extending Wirth’s classic PL/0 language, while exploring modern backends such as **WebAssembly (WASM)**.
@@ -27,12 +27,13 @@ The language has been updated with:
   - Logical operators: and, or, xor
   - write and writeNL statements.
   - Loop break statements (break from while and switch)
-  - True Functions with return types and parameters
+  - Functions with return types and parameters
   - Fixed-length arrays
   - Basic floating point mathematical operations
+  - Terminal commands
 
-  The language is structured, procedural, strongly-typed,  and generally algol-like.  It is
-  evolving towards becomming somewhat more "c-like" in each new release.
+  The language is structured, procedural, strongly-typed, and generally algol-like.  It is
+  unintentionally evolving towards becomming more "c-like" in each new release.
   
 ### Example Program
 
@@ -81,6 +82,7 @@ src/
 
 inc/
   io.wat         : IO Runtime Functions in WAT format
+  math.wat       : Math Runtime Functions in WAT format
 
 exampless/
   *.pl0          ; Example PL/0 programs for testing
@@ -103,7 +105,7 @@ cd andy
 ```
 ```lisp
 (ql:quickload :andy)
-(andy.main:compile-source "tests/test1.pl0")
+(andy.main:compile-source "examples/test1.pl0")
 ```
 ## Example Output
 ![PL/0+ -> WAT](./img/screenshot.png "Example Compilation")
