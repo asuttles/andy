@@ -1,0 +1,123 @@
+(defpackage :andy.generator
+  (:use :cl :andy.ast)
+  (:export :emit-lisp)
+  (:import-from :andy.analyzer
+   :abstract-symbol-kind
+   :abstract-symbol-type
+   :abstract-symbol-value))
+
+(in-package :andy.generator)
+
+(defparameter *release-p* nil)		; Release version Predicate
+
+(defvar *stream* nil)			; Output File Stream
+
+
+;;; Helper Functions
+(defun andy-to-lisp-type (type)
+  (ecase type
+    (:int '(signed-byte 32))
+    (:float 'double-float)
+    (:string 'simple-string)))
+
+
+;;; Emit Lisp as IR...
+
+(defun emit-program-header ()
+  "Define program optimizations (3=max, 0=min)"
+  (write-line ";;; Program Optimization" *stream*)
+  (if *release-p*
+      (pprint `(declare (optimize (speed 2) (safety 2) (debug 1))) *stream*)
+      (pprint `(declare (optimize (speed 0) (safety 3) (debug 3))) *stream*))
+  (terpri *stream*))
+
+(defun emit-global-consts (consts)
+  "Emit constant data types"
+  (dolist (c consts)
+    (let ((type (const-type c))
+	  (name (const-symbol c))
+	  (value (const-value c)))
+      (case type
+	;; Emit Integers
+	(:int (pprint `(defconstant ,name ,value) *stream*))
+	;; Emit Floating Point Numbers
+	(:float (pprint `(defconstant ,name ,(coerce name 'double-float)) *stream*))
+	;; Emit Immutable Strings
+	(:string (progn
+		   (format *stream* "(declaim (type simple-string ~A))~%" name)
+		   (format *stream* "(defconstant ~A ~A)~%" name value)))
+	;; Unknown Type Specified
+	(t (error "Generator: Unknown Data Type: ~A" type))))))
+
+;;; Emit Variables
+;;;    -- Add arrays later
+;;;    -- Ignore strings - they are all immutable for now
+(defun emit-global-vars (vars)
+  "Emit Global Variables"
+  (dolist (v vars)
+    (let ((type (var-type v))
+	  (name (var-symbol v)))
+      (case type
+	;; Emit Integers
+	(:int (progn
+		(pprint `(declaim (type (signed-byte 32) ,name)) *stream*)
+		(pprint `(defparameter ,name 0) *stream*)))
+	;; Emit Floating Point Numbers
+	(:float (progn
+		  (pprint `(declaim (type double-float ,name)) *stream*)
+		  (pprint `(defparameter ,name 0.0d0) *stream*)))
+	(t (error "Generator: Unknown Variable Data Type: ~A" type))))))
+
+
+;;; Only emit function declarations for now...
+(defun emit-functions (funcs)
+  "Emit Function Definitions"
+  (dolist (f funcs)
+    (let ((name     (func-symbol f))
+	  (ret-type (andy-to-lisp-type (func-type f)))
+	  (params
+	    (loop for p in (func-params f)
+		  collect (andy-to-lisp-type (expr-type p)))))
+      ;; Emit Function Declarations
+      (pprint `(declaim (ftype (function ,params ,ret-type) ,name)) *stream*))))
+	  
+
+;;; Function Hoisting -
+;;; Recursively collect a list of all functions
+;;; and hoist to the top-level (for now...)
+(defun collect-functions (node)
+  "Return a flat list of all function declarations in the AST."
+  (cond
+    ((typep node 'function-declaration)
+     (cons node
+           (collect-functions (func-body node))))
+    ((typep node 'program-block)
+     ;; Recursively build list, ignoring NILs...
+     (mapcan #'collect-functions (block-funcs node)))
+    (t nil)))
+
+
+(defun emit-lisp (ast lispfile)
+  "Walk the Andy program AST, generate CL as IR, and write the IR to file."
+  (with-open-file (*stream* lispfile
+				:direction :output
+				:if-exists :supersede
+				:if-does-not-exist :create)
+    (format t "Generating Lisp IR...~%")
+    (let* ((pb (program-block ast))
+	   (funcs (collect-functions pb)))
+      ;; Start Program
+      (emit-program-header)
+      ;; Emit Constants
+      (emit-global-consts
+       (block-consts pb))
+      ;; Global Variables
+      (emit-global-vars	
+       (block-vars pb))
+      ;; Functions
+      (emit-functions funcs)
+      ;; Main Procedure
+      ;;(emit-main-function (block-body pb) (program-type ast))
+      ;; End Program
+      ;;(emit-end-program)
+      )))

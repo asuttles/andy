@@ -1,5 +1,5 @@
 (defpackage :andy.main
-  (:use :cl :uiop :andy.lexer :andy.ast :andy.runtime :andy.parser :andy.analyzer :andy.emitter)
+  (:use :cl :uiop :andy.lexer :andy.ast :andy.runtime :andy.parser :andy.analyzer :andy.emitter :andy.generator)
   (:export :compile-source))
 
 (in-package :andy.main)
@@ -14,7 +14,7 @@
 (defun compile-wat2wasm (watfile)
   (uiop:run-program (format nil "wat2wasm ~A" watfile)))
 
-(defun compile-source (infile)
+(defun compile-source-to-wasm (infile)
   (let* ((watfile (concatenate 'string
 			       (pathname-name infile) ".wat"))
 	 (source  (read-file infile))
@@ -29,3 +29,14 @@
 		watfile)))
   (format t "Compilation complete."))
 
+(defun compile-source-to-lisp (infile writefile-p)
+  (let* ((lispfile
+	   (and writefile-p
+		(concatenate 'string
+			     (pathname-name infile) ".lisp")))
+	 (source (read-file infile))
+	 (tokens (tokenize source))
+	 (ast    (analyze-ast (parse tokens)))
+	 (ir     (generate-ir ast)))
+    (emit-lisp ir lispfile))
+  (format t "Compilation complete."))

@@ -21,5 +21,6 @@
 	     (:file "builtin")	     
 	     (:file "analyzer")	     
 	     (:file "emitter")
+	     (:file "generator")
 	     (:file "main")))))
 

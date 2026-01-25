@@ -7,7 +7,7 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 
 * Original Goals
 - Implement a PL/0 compiler with a real AST representation.
-- Support extensions later (floats, strings, richer functions).
+- Support extensions (floats, strings, richer functions).
 - Target WebAssembly, for a basic stack-based VM backend.
 * References
 - Wirth, Niklaus. Compiler construction. Germany: Addison-Wesley, 1996.
@@ -55,6 +55,42 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
   digit  = "0" | "1" | ... | "9" .
     
 #+end_src
+* Changes from PL/0
+** Stuff to Add
++ A foreach function
++ Variable-sized collection data structure  
++ Variable terminal commands (title, goto, etc)
++ Random number generator
++ Read statement
++ Command line switch management
+  - debug, target, listing, assembler
++ Short-circuiting logic operators for flow control?
++ 'Not' unary operator
++ Struct/Record
++ Built-In Math Operators: sqrt, int2float, float2int, abs, pow, neg, min, max, ceil, floor
++ Test negative integers and floats
++ Bounds checking for array references and assigns
+*** Improved Error Messages
+   1) Create a location struct with line/column properties
+   2) Add location slot to the AST nodes
+   3) Populate the slot when creating AST nodes in the parser
+   4) Then the analyzer can access locations when raising errors.
+** Stuff Added    
++ Comments
++ Integers (i32)
++ Immutable ASCII Strings
++ else
++ switch-case
++ C-Style for loops (with early break terminations)
++ logic operators: and,or,xor
++ write statement
++ Emitter indent/outdent functions to prettify printing
++ Break from while loops and switch-case statements
++ Function parameters and returns
++ Floating Point Numbers
++ Fixed=sized arrays
++ Floating Point Math operations (pow, sin, cos, ln, exp, abs, sqrt, floor, ceil)  
++ Termainl Commands (cls)
 * Andy EBNF
 #+begin_src ebnf
 
@@ -184,42 +220,6 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 | Stack (language-managed)   |    0xF000 |   ↓ ↓ ↓ |     61440 |   ↓ ↓ ↓ | downward | Grows downward for local call frames or temporaries.                         |
 |----------------------------+-----------+---------+-----------+---------+----------+------------------------------------------------------------------------------|
 
-* Changes from PL/0
-** Stuff to Add
-+ A foreach function
-+ Variable-sized collection data structure  
-+ Variable terminal commands (title, goto, etc)
-+ Random number generator
-+ Read statement
-+ Command line switch management
-  - debug, target, listing, assembler
-+ Short-circuiting logic operators for flow control?
-+ 'Not' unary operator
-+ Struct/Record
-+ Built-In Math Operators: sqrt, int2float, float2int, abs, pow, neg, min, max, ceil, floor
-+ Test negative integers and floats
-+ Bounds checking for array references and assigns
-*** Improved Error Messages
-   1) Create a location struct with line/column properties
-   2) Add location slot to the AST nodes
-   3) Populate the slot when creating AST nodes in the parser
-   4) Then the analyzer can access locations when raising errors.
-** Stuff Added    
-+ Comments
-+ Integers (i32)
-+ Immutable ASCII Strings
-+ else
-+ switch-case
-+ C-Style for loops (with early break terminations)
-+ logic operators: and,or,xor
-+ write statement
-+ Emitter indent/outdent functions to prettify printing
-+ Break from while loops and switch-case statements
-+ Function parameters and returns
-+ Floating Point Numbers
-+ Fixed=sized arrays
-+ Floating Point Math operations (pow, sin, cos, ln, exp, abs, sqrt, floor, ceil)  
-+ Termainl Commands (cls)
 * Terminal Escape Codes in WASM Runtime Table
 
 |-------------+--------+----------------------------+----------------------------|
@@ -256,6 +256,65 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 |-------------+--------+----------------------------+----------------------------|
 |             |        | **TOTAL BYTES:** 140       | **Next free offset: 140**  |
 
+* Common Lisp Intermediate Representation
+  - Stage: Lowered representation of AST for code generation
+  - Purpose: Simplify AST into explicit, CL-friendly constructs
+
+** Program
+   - (:program Type Consts Vars Funcs Body)
+  
+** Types
+   - :int
+   - :floa
+   - :string
+   - :void
+
+** Literals
+   - (:int 42)
+   - (:float 3.14d0)
+   - (:string "hello")
+
+** Constants
+   - (:const Type x Value)
+   
+** Variables
+   - (:var Type x)
+
+** Assignment
+   - (:set x expr)
+
+** Binary Operations
+   - (:binop + left right)
+   - (:binop - left right)
+   - (:binop * left right)
+   - (:binop / left right)
+
+** Function Call
+   - (:call f (arg1 arg2 ...))
+
+** Control Flow
+   - If: (:if cond then else)
+   - While: (:while cond body)
+   - For: (:for i start end body)
+   - Return: (:return expr)
+   - Block: (:block stmt1 stmt2 ...)
+
+** Function Definition
+   - (:func name
+           ((arg1 :type1) (arg2 :type2) ...)
+           :return-type
+           body)
+
+** Built-in Operations / Statements
+   - Print: (:print expr)
+   - Standard math: +, -, *, / (see :binop)
+
+** Notes
+   - Arrays and advanced types can be added as:
+     - (:array-new type size)
+     - (:array-ref arr idx)
+     - (:array-set arr idx val)
+
 * Debugging in SLIME
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure
@@ -282,5 +341,3 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 │   └── runtime.lisp
 └── examples
     └── *.pl0
-* WASM Notes
-- [[https://developer.mozilla.org/en-US/docs/WebAssembly/Guides/Understanding_the_text_format][MSDN Tutorial]]

@@ -1,4 +1,5 @@
 // Test Recursive Function Calling
+program int
 
 int x;
 
@@ -6,9 +7,9 @@ int x;
 fun fib(int n) : int
    begin
       if n = 1 or n = 2 then
-         ret 1;
+         return 1;
       else
-         ret fib(n-2) + fib(n-1);
+         return fib(n-2) + fib(n-1);
    end
 
 // Main Function

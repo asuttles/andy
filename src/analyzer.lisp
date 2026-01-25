@@ -414,7 +414,7 @@ Raises an error if the name is already defined in this scope."
 ;;; Perform Symantic Analysis and Build Symbol Table
 (defun analyze-ast (ast)
   "Semantic analysis entry point."
-  (format t "Checking semantics .......")
+  (format t "Checking semantics .......~%")
   (setq *symbol-table* nil
 	*loop-stack* nil
 	*function-stack* nil)

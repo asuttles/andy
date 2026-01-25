@@ -606,7 +606,7 @@ where the expression is formed by 'lhs OR rhs'."
 (defun parse (tokens)
   "Create parser data struct from TOKENS stream, and begin parsing"
   (format t "Parsing token stream...~%")
-  (initialize-runtime)
+  ;;(initialize-runtime)
   (setf *string-literals* '())
   (let ((parser (make-parser :tokens tokens)))
     (parse-program parser)))
