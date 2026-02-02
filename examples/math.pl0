@@ -8,5 +8,7 @@ begin
    lnx := ln(5.0);
    y   := 3.0;
    write lnx;
+   writeNL;
+   writeNL;
    return exp(y*lnx);
 end.     
