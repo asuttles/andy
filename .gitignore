@@ -1,7 +1,16 @@
+# Ignore intermediate files
 *.wasm
 *.wat
 *.fasl
 *.fas
+
+# Ignore emacs backup files
 *~
 #*
+
+# Ignore other non-project app data
 AppData/*
+
+# Un-ignore inc files
+!inc/
+!inc/**/*.wat
