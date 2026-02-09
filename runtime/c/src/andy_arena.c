@@ -88,17 +88,17 @@ arena_t* arena_create(size_t size) {
 /* Reset an Arena */
 void arena_reset(arena_t* aptr) {
 
-  /* Guard against a NULL pointer */
-  if (!aptr || !aptr->head) return;
+    /* Guard against a NULL pointer */
+    if (!aptr || !aptr->head) return;
   
-  /* Recursively destory all but Head Buffer */
-  if (aptr->head->next)
-    destroy_buffer(aptr->head->next);
+    /* Recursively destory all but Head Buffer */
+    if (aptr->head->next)
+	destroy_buffer(aptr->head->next);
 
-  /* Reset the Arena Head Buffer */
-  aptr->head->offset = 0;
-  aptr->head->next = NULL;
-  aptr->current = aptr->head; 
+    /* Reset the Arena Head Buffer */
+    aptr->head->offset = 0;
+    aptr->head->next = NULL;
+    aptr->current = aptr->head; 
 }
 
 /* Destroy a Arena */
@@ -117,23 +117,23 @@ void arena_destroy(arena_t* aptr) {
 /* Allocate a Section of the Arena of SIZE, with alignment ALIGN */
 void* arena_alloc(arena_t* aptr, size_t data_size, size_t align) {
 
-  buffer_t* bptr = aptr->current;
-  size_t offset = bptr->offset;
+    buffer_t* bptr = aptr->current;
+    size_t offset = bptr->offset;
 
-  /* Align the Offset */
-  size_t misalign = offset % align;
-  if (misalign != 0)
-    offset += align - misalign;
+    /* Align the Offset */
+    size_t misalign = offset % align;
+    if (misalign != 0)
+	offset += align - misalign;
   
-  /* Generate new Buffer, if needed */
-  if (offset + data_size > bptr->size) {
-    expand_arena(aptr, data_size);
-    bptr = aptr->current;
-    offset = 0;
-  }
+    /* Generate new Buffer, if needed */
+    if (offset + data_size > bptr->size) {
+	expand_arena(aptr, data_size);
+	bptr = aptr->current;
+	offset = 0;
+    }
 
-  /* Update the Offset and return the Pointer*/
-  void* ptr = bptr->data + offset;
-  bptr->offset = offset + data_size;
-  return ptr;
+    /* Update the Offset and return the Pointer*/
+    void* ptr = bptr->data + offset;
+    bptr->offset = offset + data_size;
+    return ptr;
 }
