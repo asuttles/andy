@@ -20,6 +20,7 @@
 	     (:file "parser")	     
 	     (:file "builtin")	     
 	     (:file "analyzer")	     
-	     (:file "emitter")
+	     (:file "wasm-emitter")
+	     (:file "c-emitter")
 	     (:file "main")))))
 

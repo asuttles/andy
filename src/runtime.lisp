@@ -31,14 +31,19 @@
 (defvar *constant-offset* *CONST-MEMORY*)
 (defvar *heap-offset* 0)
 
+
 (defun initialize-runtime ()
   "Re-initialize memory to initial conditions."
-  (setf *constant-offset* *CONST-MEMORY*
-	*heap-offset* 0
-	*io-runtime* (uiop:read-file-string "~/programming/lisp/andy/inc/io.wat")
-	*math-runtime* (uiop:read-file-string "~/programming/lisp/andy/inc/math.wat")
-	*import-math-p* nil
-	*import-io-p* t))
+  (let* ((inc-dir (merge-pathnames "runtime/wat/" (asdf:system-source-directory :andy)))
+	 (io-file (merge-pathnames "io.wat" inc-dir))
+	 (math-file (merge-pathnames "math.wat" inc-dir)))
+    ;; Set runtime state
+    (setf *constant-offset* *CONST-MEMORY*
+	  *heap-offset* 0
+	  *io-runtime* (uiop:read-file-string io-file)
+	  *math-runtime* (uiop:read-file-string math-file)
+	  *import-math-p* nil
+	  *import-io-p* t)))
 
 (defun get-addr (key)
   (cdr (assoc key *memory-map*)))

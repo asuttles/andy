@@ -3,7 +3,7 @@
 
 ANDY COMPILER
 
-Andy's PL/0+ to Wasm compiler written in Common Lisp.
+Andy's ALGOL-- to +Wasm+ c Compiler written in Common Lisp.
 
 * Original Goals
 - Implement a PL/0 compiler with a real AST representation.
@@ -256,7 +256,40 @@ Andy's PL/0+ to Wasm compiler written in Common Lisp.
 |-------------+--------+----------------------------+----------------------------|
 |             |        | **TOTAL BYTES:** 140       | **Next free offset: 140**  |
 
+* C Backend Notes
+  + Decided to try out a C Backend to maximize flexibility
+  + Some backend tools to explore:
+    - clang -Wall -Wextra -Wpedantic -Werror
+    - explore: valgrind and ASan/UBSan
+    - explore: clang-format (using emacs)
+    - godbolt.org: explore how compiled c lowers to assembly language
+  + If you want to squeeze more optimization out of clang:
+    - Use -O3 or -Ofast
+    - Enable LTO: -flto
+    - Avoid pointer aliasing where possible (restrict, clear ownership)
+    - Prefer structs over pointer-heavy graphs
+    - Keep control flow explicit and simple
+  + How the Compiler Uses The Runtime
+    - Emit #include "andy.h"
+    - Allocates heap-allocated data (strings/arrays) via the arena
+    - Uses runtime printing functions
+    - Uses runtime error functions
+* Andy C Types Table 
+
+   |-----------+-------------------+-----------------------------------------------------|
+   | Andy Type | Implemented as... | Notes                                               |
+   |-----------+-------------------+-----------------------------------------------------|
+   | int       | andy_int          | 64-bit Signed (c int64_t)                           |
+   | float     | andy_float        | 64-bit (c double)                                   |
+   | string    | andy_string       | c struct (size_t length, char*) data is 8-bit ascii |
+   | array     | andy_array        | c struct (size_t size, size_t length, void*)        |
+   |-----------+-------------------+-----------------------------------------------------|
+   |           |                   | -- Future Expansion --                              |
+   | func      | func type         | for functional programming                          |
+   |           |                   | c struct (void* code, void* env)                    |
+   |-----------+-------------------+-----------------------------------------------------|
 * Debugging in SLIME
+Use the following if debugging code in scheme so lisp is not optimized...
 (declaim (optimize (debug 3) (safety 3) (speed 0) (compilation-speed 0)))
 * Project Structure
 .

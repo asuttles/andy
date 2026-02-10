@@ -1,4 +1,4 @@
-(defpackage :andy.emitter
+(defpackage :andy.wasm-emitter
   (:use :cl :andy.ast :andy.runtime)
   (:export :emit-wasm)
   (:import-from :andy.analyzer
@@ -6,7 +6,7 @@
    :abstract-symbol-type
    :abstract-symbol-value))
 
-(in-package :andy.emitter)
+(in-package :andy.wasm-emitter)
 
 (defvar *stream* nil)			; Output stream
 
