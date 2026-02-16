@@ -8,6 +8,11 @@
 
 #define BUFF_LEN 256
 
+void andy_print_newline(void) {
+
+    printf("/n");
+}
+
 void andy_print_int(int64_t x) {
 
   printf("%lli", x);

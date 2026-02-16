@@ -3,6 +3,7 @@
 
 #include "andy_types.h"
 
+void andy_print_newline(void);
 void andy_print_int(int64_t x);
 void andy_print_float(double x);
 void andy_print_string(andy_string s);
