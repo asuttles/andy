@@ -407,8 +407,18 @@ Raises an error if the name is already defined in this scope."
 
 ;;; Program Analysis
 (defun analyze-program (prog-node)
-  (let ((block (program-block prog-node)))
-    (push (program-type prog-node) *function-stack*)
+  (let ((block (program-block prog-node))
+	(type  (program-type prog-node)))
+    (case type
+      (:program
+       (push :int *function-stack*)	; Main only returns int
+       (when (null (block-body block))
+	 (error "Program Definition Error: Program must have Code Block")))
+      (:module
+       (when (block-body block)
+	 (error "Module Definition Error: Modules do not have Code Blocks")))
+      (otherwise
+       (error "Unknown Module Definition")))
     (analyze-block block)))
 
 ;;; Perform Symantic Analysis and Build Symbol Table

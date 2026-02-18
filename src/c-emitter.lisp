@@ -11,6 +11,24 @@
 (defvar *stream* nil)			; Output stream
 
 
+;;; Operator Associations Table
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +op-table+
+    '((:eql    "==")
+      (:neq    "!=")
+      (:lss    "<")
+      (:leq    "<=")
+      (:gtr    ">")
+      (:geq    ">=")
+      (:or     "||")
+      (:and    "&&")
+      (:xor    "xor")
+      (:plus   "+")
+      (:minus  "-")
+      (:times  "*")
+      (:divide "/")
+      (:modulo "%"))))
+
 ;;;			       Helpers
 ;;; ------------------------------------------------------------------
 
@@ -27,6 +45,8 @@
 (defun get-ind ()
   *indent*)
 
+
+;;; Code Emitters
 (defun emit-indent ()
   (write-string
    (make-string (get-ind)
@@ -55,6 +75,18 @@
 (defun emit-newline ()
   (terpri *stream*))
 
+(defun emit-funcall (f)
+  (emit-str "~A(" (funcall-symbol f))
+  (loop for arg in (funcall-args f)
+	for i from 0
+	do (progn
+	     (if (not (zerop i)) (emit-str ", "))
+	     (emit-c-expression arg))))
+
+(defun emit-c-operator (op)
+  (emit-str " ~A " (cadr (assoc op +op-table+))))
+
+
 ;;; Format the andy types
 (defun get-andy-type (type)
   (case type
@@ -63,7 +95,7 @@
     (:string "andy_string")
     (t (error "Emitter: Unknown data type: ~A" type))))
 
-;;; Function Hoisting - all functions at top-level
+;;; Function Hoisting - Coll all funcs at top-level
 (defun collect-functions (node)
   "Return a flat list of all function declarations in the AST."
   (cond
@@ -151,11 +183,38 @@
 
 ;;;			   Emit Expressions
 ;;; ------------------------------------------------------------------
+(defgeneric emit-c-expression (expr))
 
-;;; TEST STUB
-(defun emit-c-expression (expr)
-  (when expr
-    (emit-str "<expression>")))
+;;; Number Literal Expression
+(defmethod emit-c-expression ((expr number-literal))
+  (emit-str "~A" (number-value expr)))
+
+;;; Identifier Expression
+(defmethod emit-c-expression ((expr identifier))
+  (emit-str "~A" (id-symbol expr)))
+
+;;; Function Call Expression
+(defmethod emit-c-expression ((expr function-call))
+  (emit-funcall expr)
+  (emit-str ")"))
+
+;;; Conditional Expression
+(defmethod emit-c-expression ((expr conditional-expression))
+  ;; LHS Expression
+  (emit-c-expression (cond-lhs expr))
+  ;; Operator
+  (emit-c-operator (cond-op expr))
+  ;; RHS Expression
+  (emit-c-expression (cond-rhs expr)))
+
+;;; Binary Operations
+(defmethod emit-c-expression ((expr binary-expression))
+  ;; LHS Expression
+  (emit-c-expression (binary-lhs expr))
+  ;; Operator
+  (emit-c-operator (binary-op expr))
+  ;; RHS Expression
+  (emit-c-expression (binary-rhs expr)))
 
 
 ;;;			   Emit Statements
@@ -167,7 +226,7 @@
   (dolist (s (cmpnd-stmnts stmnt))
     (emit-c-statement s)))
 
-;; Assign Statement
+;;; Assign Statement
 (defmethod emit-c-statement ((stmnt assign-statement))
   (let ((lhs-sym (id-symbol (assign-var stmnt)))
 	(rhs-exp (assign-expr stmnt)))
@@ -175,7 +234,7 @@
     (emit-c-expression rhs-exp)
     (emit-str-nl ";")))
 
-;; If-then-else Statement
+;;; If-then-else Statement
 (defmethod emit-c-statement ((stmnt if-statement))
   (let ((condition (if-cond stmnt))
 	(then-stmnt (if-conseq stmnt))
@@ -209,11 +268,11 @@
     (outdent)
     (emit-line "}")))
 
-;; Break Statement
+;;; Break Statement
 (defmethod emit-c-statement ((stmnt break-statement))
   (emit-line "break;"))
 
-;; Switch Statement
+;;; Switch Statement
 (defmethod emit-c-statement ((stmnt switch-statement))
   (let* ((expr (switch-selector stmnt))
 	 (cases (switch-cases stmnt))
@@ -244,7 +303,7 @@
     (outdent)
     (emit-line "}")))
 
-;; For Statement
+;;; For Statement
 (defmethod emit-c-statement ((stmnt for-statement))
   (let ((init  (for-init stmnt))
 	(cont  (for-cont stmnt))
@@ -263,23 +322,19 @@
     (outdent)
     (emit-line "}")))
 
-;; Funcall Statement
+;;; Funcall Statement
 (defmethod emit-c-statement ((stmnt function-call))
-  (emit-line "~A(" (funcall-symbol stmnt))
-  (loop for arg in (funcall-args stmnt)
-	for i from 0
-	do (progn
-	     (if (not (zerop i)) (emit-str ", "))
-	     (emit-c-expression arg)))
+  (emit-funcall stmnt)
   (emit-str-nl ");"))
 
-;; Return Statement
+;;; Return Statement
 (defmethod emit-c-statement ((stmnt return-statement))
+  (emit-newline)
   (emit "return ")
   (emit-c-expression (return-expr stmnt))
   (emit-str-nl ";"))
 
-;; Write Statement
+;;; Write Statement
 (defmethod emit-c-statement ((stmnt write-statement))
   (if (write-nl stmnt)
       (emit-line "andy_print_newline();")
@@ -344,7 +399,8 @@
       (emit-c-statement (block-body fb))
       ;; Exit Function Scope
       (outdent)
-      (emit-line "}"))))
+      (emit-line "}")
+      (emit-newline))))
 
 
 ;;;			      C PROGRAM
@@ -356,16 +412,29 @@
   (emit-newline)
   (emit-newline))
 
-(defun emit-c-memory-allocation ()
-  "Emit Globa Arena Allocation from Heap"
-  (emit-line "/* Initialize Program Heap Allocation */")
-  (emit-line "andy_runtime_init();")
-  (emit-line "arena_t* MEMORY = andy_get_global_arena();")
-  (emit-newline)
-  (emit-newline))
+(defun emit-c-main-function (stmnt)
+  "Emit the Main function, if module code body exists"
+  (when stmnt
+    (emit-line "int main(int argc, [[maybe_unused]] char** argv) {")
+    (emit-newline)
+    (indent)
+    (emit-line "/* Initialize Program Heap Allocation */")
+    (emit-line "andy_runtime_init();")
+    (emit-newline)
+    (emit-c-statement stmnt)
+    (emit-newline)
+    (emit-line "return EXIT_SUCCESS;")
+    (outdent)
+    (emit-line "}")))
 
 ;;; Emit C Output File
 (defun emit-c (ast fn)
+  ;; Output filename matches source file specification
+  (when (not (string= (andy.ast:program-name ast)
+		      (pathname-name fn)))
+    (format t "~%~%WARNING: Source filename and ~A name do not match.~%~%"
+	    (program-type ast))
+    (setf fn (concatenate 'string (andy.ast:program-name ast) ".c")))
   (with-open-file (*stream* fn
 			    :direction :output
 			    :if-exists :supersede
@@ -374,22 +443,16 @@
     (setf *indent* 0)
     (let* ((pb (program-block ast))
 	   (funcs (collect-functions pb)))
-      ;; Start Program
+
+      ;; Headers and Prototypes
       (emit-c-headers)
-      ;; Function Definitions
       (emit-c-function-prototypes funcs)
       
-      ;; ------------------------------------
-      ;; MOVE THIS INTO AN INIT FUNCTION!!
-      ;; or get rid of it, don't need global memory var
-      ;; initialize heap at top of main...
-      ;;(emit-c-memory-allocation)
-      ;; ------------------------------------
-
       ;; Global Data
       (emit-c-global-consts (block-consts pb))
       (emit-c-global-vars (block-vars pb))
 
       ;; Functions
       (emit-c-function-definitions funcs)
+      (emit-c-main-function (block-body pb))
       )))

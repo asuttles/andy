@@ -31,4 +31,4 @@ clean:
 install:
 	mkdir -p /usr/local/lib /usr/local/include/andy
 	cp $(LIB) /usr/local/lib/
-	cp include/*.h /usr/local/include/andy
+	cp inc/*.h /usr/local/include/andy

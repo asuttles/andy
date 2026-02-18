@@ -31,7 +31,7 @@
   (eq (token-type (current-token parser)) type))
 
 (defun expect-token (parser type)
-  "Returns current token lexeme, if it matches TYPE"
+  "Returns current token, if it matches TYPE"
   (let ((tok (current-token parser)))
     (if (eq (token-type tok) type)
         (prog1 tok (advance-token parser))
@@ -588,19 +588,18 @@ where the expression is formed by 'lhs OR rhs'."
 
 ;;; Program
 (defun parse-program (parser)
-  (expect-token parser :program)
   (let ((type (token-type (current-token parser))))
-    (if (member type '(:int :float :void))
+    (when (not (member type '(:program :module)))
+      (error "Parse Error: Source file must be program or module"))
+    (advance-token parser)
+    (let ((name (token-lexeme (expect-token parser :ident))))
+      (let ((block (parse-block parser)))
+	(unless (eq (token-type (current-token parser)) :period)
+	  (error "Parse Error: Expected '.' at end of program"))
 	(advance-token parser)
-	(error "Parse Error: Unknown Return Type for Program"))
-    (let ((block (parse-block parser)))
-      (unless (eq (token-type (current-token parser)) :period)
-	(error "Parse Error: Expected '.' at end of program"))
-      (advance-token parser)
-      ;; Append string literals to constants list
-      (setf (block-consts block) (append *string-literals* (block-consts block)))
-      (make-instance 'program :type type :block block))))
-
+	;; Append program string literals to constants list
+	(setf (block-consts block) (append *string-literals* (block-consts block)))
+	(make-instance 'program :type type :block block :name name)))))
 
 ;;; Parse the token stream...
 (defun parse (tokens)

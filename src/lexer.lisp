@@ -48,6 +48,7 @@
     ("and"       . :and)
     ("or"        . :or)
     ("xor"       . :xor)
+    ("module"    . :module)
     ("program"   . :program)))
 
 (defparameter +operators+

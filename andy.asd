@@ -19,7 +19,7 @@
 	     (:file "runtime")	     
 	     (:file "parser")	     
 	     (:file "builtin")	     
-	     (:file "analyzer")	     
+	     (:file "analyzer" :depends-on ("ast"))
 	     (:file "wasm-emitter")
 	     (:file "c-emitter")
 	     (:file "main")))))

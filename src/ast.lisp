@@ -1,6 +1,7 @@
 (defpackage :andy.ast
   (:use :cl)
   (:export
+
    ;; Abstract Symbols for Semantic Analysis
    :make-abstract-symbol :abstract-symbol-name :abstract-symbol-kind
    :abstract-symbol-type :abstract-symbol-value :abstract-symbol-params
@@ -10,7 +11,7 @@
    :ast-node :statement :expression
 
    ;; Program structure
-   :program :program-block :program-type
+   :program :program-block :program-type :program-name
 
    ;; Declarations
    :constant-declaration :variable-declaration :procedure-declaration :function-declaration
@@ -83,7 +84,8 @@
 ;;; PROGRAM Structure
 (defclass program (ast-node)
   ((block :initarg :block :accessor program-block)
-   (type  :initarg :type  :accessor program-type)))
+   (type  :initarg :type  :accessor program-type  :initform nil)
+   (name  :initarg :name  :accessor program-name)))
 
 (defclass program-block (ast-node)
   ((constants  :initarg :consts :accessor block-consts :initform '())

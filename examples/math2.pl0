@@ -1,4 +1,4 @@
-program float
+program math2
 
 const float PI = 3.141592;
 
@@ -24,6 +24,5 @@ begin
    y   := 3.0;
    write "The result is: ";
    writeNL;
-   write lnx;
-   return exp(y*lnx);
+   write y*lnx;
 end.     

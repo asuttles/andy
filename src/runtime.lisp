@@ -27,8 +27,8 @@
     (:stack-top         . #xF000)))
 
 ;; 140 bytes reserved for termainal escape sequences
-(defconstant *CONST-MEMORY* 140)
-(defvar *constant-offset* *CONST-MEMORY*)
+(defconstant +CONST-MEMORY+ 140)
+(defvar *constant-offset* +CONST-MEMORY+)
 (defvar *heap-offset* 0)
 
 
@@ -38,7 +38,7 @@
 	 (io-file (merge-pathnames "io.wat" inc-dir))
 	 (math-file (merge-pathnames "math.wat" inc-dir)))
     ;; Set runtime state
-    (setf *constant-offset* *CONST-MEMORY*
+    (setf *constant-offset* +CONST-MEMORY+
 	  *heap-offset* 0
 	  *io-runtime* (uiop:read-file-string io-file)
 	  *math-runtime* (uiop:read-file-string math-file)
