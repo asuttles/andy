@@ -1,8 +1,8 @@
 (defsystem "andy"
-  :description "A simple PL/0 compiler targeting WASM"
+  :description "A simple PL/0++ compiler targeting WASM and C"
   :author "Andrew Suttles"
   :license "MIT"
-  :version "0.8.0"
+  :version "0.9.2"
   :depends-on (:parse-float)
 
   ;; Localize the build

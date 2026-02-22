@@ -408,7 +408,7 @@
 
 (defun emit-c-headers ()
   "Emit Included C Headers"
-  (emit-line "#include \"andy.h\"")
+  (emit-line "#include \"andy/andy.h\"")
   (emit-newline)
   (emit-newline))
 

@@ -10,7 +10,7 @@
 
 void andy_print_newline(void) {
 
-    printf("/n");
+    printf("\n");
 }
 
 void andy_print_int(int64_t x) {

@@ -1,4 +1,14 @@
+# On msys64:    make install PREFIX=/mingw64
+# On linux/bsd: make install
+PREFIX ?= /usr/local
+VERSION ?= 0.9.2
+
 ROOT    := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+INC = inc/*.h
+PC_IN = pc/andy_runtime.pc.in
+PC = pc/andy_runtime.pc
+
 
 CC      := clang
 CFLAGS  := -std=c23 -Wall -Wextra -Wpedantic -O3 -Iinc
@@ -28,7 +38,14 @@ test: $(LIB)
 clean:
 	rm -f src/*.o $(LIB) tests/runtime_test
 
-install:
-	mkdir -p /usr/local/lib /usr/local/include/andy
-	cp $(LIB) /usr/local/lib/
-	cp inc/*.h /usr/local/include/andy
+$(PC): $(PC_IN)
+	sed -e "s|@PREFIX@|$(PREFIX)|g" \
+	    -e "s|@VERSION@|$(VERSION)|g" \
+	    $< > $@
+
+install: $(PC)
+	mkdir -p $(PREFIX)/lib $(PREFIX)/include/andy
+	cp $(LIB) $(PREFIX)/lib/
+	cp $(INC) $(PREFIX)/include/andy
+	mkdir -p $(PREFIX)/lib/pkgconfig
+	cp $(PC) $(PREFIX)/lib/pkgconfig/
