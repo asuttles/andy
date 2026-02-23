@@ -1,11 +1,10 @@
 ;;;; -------------------------------------------------------
 ;;;; ANDYC - Transpile Andy to C/WASM and Compile
 ;;;;
-;;;; How to make executable:
-;;;;    (sb-ext:save-lisp-and-die
-;;;;     "andyc"
-;;;;     :toplevel #'main
-;;;;     :executable t)
+;;;; To build the compiler:
+;;;;
+;;;;   > ./build.sh
+;;;;
 ;;;; -------------------------------------------------------
 (defpackage :andy.main
   (:use :cl :uiop
@@ -16,9 +15,16 @@
 
 (in-package :andy.main)
 
+;;; Compiler State
 (defvar *target* :C)
-(defvar *compile-only-p* nil)
+(defvar *compile-only-p* nil) 		; Compile source or build project
 (defvar *files* nil)
+
+;;; C Compiler Parameters
+(defvar *CC* nil)
+(defvar *cflags* nil)
+(defvar *ldflags* nil)
+
 
 ;;; ------------------------------------------------------------------
 ;;;			     WASM BACKEND
@@ -51,18 +57,22 @@
 ;;;			      C BACKEND
 ;;; ------------------------------------------------------------------
 
-(defun compile-source-to-c (infile)
-  (let* ((cfile (concatenate 'string
-			     (pathname-name infile) ".c"))
-	 (source  (read-file infile))
-         (tokens  (tokenize source))
-         (ast     (parse tokens)))
-    (when (analyze-ast ast)
-      (format t "all checks passed.~%"))
-    (emit-c ast cfile)
-    ;; Compile and link c output
-    (format t "C Transpilation complete.")
-    cfile))
+(defun detect-c-compiler ()
+  "Return the first available C compiler, or signal an error if none are found."
+  ;; loop through compilers until 'command -v' returns a 0 exit code...
+  (loop for cc in '("clang" "gcc")
+          thereis
+	  (when
+	      (lambda (x) (zerop x)
+		(multiple-value-bind (stdout stderr exit-code)
+                    (uiop:run-program `("command" "-v" ,cc)
+                                      :ignore-error-status t
+                                      :output :string
+                                      :error-output :string)
+		  (declare (ignore stdout stderr))
+                  exit-code))
+            cc)
+        finally (error "No C compiler found. Please install gcc or clang.")))
 
 (defun check-andy-runtime-installed ()
   ;; Ignore stdout and stderr strings, capture exit-code
@@ -74,6 +84,19 @@
     (if (zerop exit-code)
 	(format t "Andy Runtime Install Check - complete~%")
 	(error "Compiler Error: Andy Runtime is not installed."))))
+
+(defun compile-source-to-c (infile)
+  (let* ((cfile (concatenate 'string
+			     (pathname-name infile) ".c"))
+	 (source  (read-file infile))
+         (tokens  (tokenize source))
+         (ast     (parse tokens)))
+    (when (analyze-ast ast)
+      (format t "all checks passed.~%"))
+    (emit-c ast cfile)
+    ;; Compile and link c output
+    (format t "C Transpilation complete.~%")
+    cfile))
 
 (defun get-andy-runtime-cflags ()
   "Return CFLAGS for andy_runtime."
@@ -89,25 +112,28 @@
     '("pkg-config" "--libs" "andy_runtime")
     :output :string)))
 
-
 (defun compile-c-file (file)
-  "Compile the C file produced by the compiler using pkg-config flags."
+  "Compile the C file produced by the transpiler using pkg-config flags."
   (check-andy-runtime-installed)
-  (let ((cflags  (get-andy-runtime-cflags))
-	(ldflags (get-andy-runtime-ldflags))
-	(cfile (compile-source-to-c file)))
-    (format t "Wrote ~A~%Compiling ~A to object file.~%" cfile cfile)
+  (let ((cfile (compile-source-to-c file)))
+    (format t "Wrote ~A~%Compiling ~A to object file....~%" cfile cfile)
     (uiop:run-program
-     `("clang" ,cfile ,cflags ,ldflags "-o" ,(pathname-name cfile))
+     `(,*CC* ,cfile ,*cflags* ,*ldflags* "-o" ,(pathname-name cfile))
      :output *standard-output*
      :error-output *standard-output*)))
 
+(defun setup-c-compiler ()
+  "Find the c compiler and set compiler flags."
+  (setf *CC* (detect-c-compiler)
+	*cflags* (get-andy-runtime-cflags)
+	*ldflags* (get-andy-runtime-ldflags)))
 
 ;;; ------------------------------------------------------------------
 ;;;			     MAIN DRIVER
 ;;; ------------------------------------------------------------------
 
 (defun parse-args (args)
+  "Parse command-line args and set global state vars"
   (loop while args do
     (let ((arg (pop args)))
       (cond
@@ -141,13 +167,15 @@ Options:
   (uiop:quit))
 
 (defun main ()
+  "Parse command line args and compile files or build project."
   (let ((args (uiop:command-line-arguments))
 	(xpiler #'compile-c-file))
     (parse-args args)
+    ;; Set the backend
     (if (eq *target* :WASM)
-	(setf xpiler #'compile-source-to-wasm))
+	(setf xpiler #'compile-source-to-wasm)
+	(setup-c-compiler))
+    ;; Compile Source Files
     (if *compile-only-p*
 	(dolist (f *files*)
 	  (funcall xpiler f)))))
-	
-  

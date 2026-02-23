@@ -1,8 +1,15 @@
+# Ignore compiler executable
+andyc
+
 # Ignore intermediate files
 *.wasm
 *.wat
 *.fasl
 *.fas
+*.a
+*.o
+*.exe
+*.c
 
 # Ignore emacs backup files
 *~
@@ -14,3 +21,7 @@ AppData/*
 # Un-ignore inc files
 !inc/
 !inc/**/*.wat
+
+# Un-ignore runtime c source files
+!runtime/c/
+!runtime/c/src/*.c
