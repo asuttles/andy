@@ -1,0 +1,20 @@
+program fizzbuzz
+
+const int limit = 20;
+int i;
+
+begin
+   for i := 1; i <= limit; i := i + 1; do
+
+      begin
+         write i;
+         write ": ";
+
+         if i % 3 = 0 then
+	    write "fizz";
+         if i % 5 = 0 then
+	    write "buzz";
+
+         writeNL;
+      end
+end.

@@ -18,6 +18,9 @@ andyc
 # Ignore other non-project app data
 AppData/*
 
+# Ignore old example programs
+examples/old/*
+
 # Un-ignore inc files
 !inc/
 !inc/**/*.wat

@@ -60,7 +60,7 @@
   kind					; :const, :var, :procedure
   type					; Future Expansion
   value					; for constants
-  params				; for procedures
+  params				; for functions
   )
 
 (defun make-symbol-entry (name kind &key type value params)

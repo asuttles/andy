@@ -45,7 +45,6 @@
 (defun get-ind ()
   *indent*)
 
-
 ;;; Code Emitters
 (defun emit-indent ()
   (write-string
@@ -76,12 +75,19 @@
   (terpri *stream*))
 
 (defun emit-funcall (f)
-  (emit-str "~A(" (funcall-symbol f))
-  (loop for arg in (funcall-args f)
-	for i from 0
-	do (progn
-	     (if (not (zerop i)) (emit-str ", "))
-	     (emit-c-expression arg))))
+  ;; Get Function Call Name
+  (let ((name (funcall-symbol f))
+	(sym  (funcall-binding f)))
+    ;; Convert to Andy Runtime Call, If Builtin
+    (when (eq (abstract-symbol-kind sym) :builtin)
+      (setf name (abstract-symbol-value sym)))
+    ;; Emit the Function Call 
+    (emit-str "~A(" name)
+    (loop for arg in (funcall-args f)
+	  for i from 0
+	  do (progn
+	       (if (not (zerop i)) (emit-str ", "))
+	       (emit-c-expression arg)))))
 
 (defun emit-c-operator (op)
   (emit-str " ~A " (cadr (assoc op +op-table+))))
@@ -227,12 +233,15 @@
     (emit-c-statement s)))
 
 ;;; Assign Statement
-(defmethod emit-c-statement ((stmnt assign-statement))
+(defun emit-assignment (stmnt)
   (let ((lhs-sym (id-symbol (assign-var stmnt)))
 	(rhs-exp (assign-expr stmnt)))
     (emit "~A = " lhs-sym)
-    (emit-c-expression rhs-exp)
-    (emit-str-nl ";")))
+    (emit-c-expression rhs-exp)))
+  
+(defmethod emit-c-statement ((stmnt assign-statement))
+  (emit-assignment stmnt)
+  (emit-str-nl ";"))
 
 ;;; If-then-else Statement
 (defmethod emit-c-statement ((stmnt if-statement))
@@ -310,12 +319,12 @@
 	(iter  (for-iter stmnt))
 	(body  (for-body stmnt)))
     ;; for (...; ...; ...) { ... }
-    (emit-line "for (")
-    (emit-c-statement init)
+    (emit "for (")
+    (emit-assignment init)
     (emit-str "; ")
     (emit-c-expression cont)
     (emit-str "; ")
-    (emit-c-statement iter)
+    (emit-assignment iter)
     (emit-str-nl ") {")
     (indent)
     (emit-c-statement body)

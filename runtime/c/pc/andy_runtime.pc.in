@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: andy_runtime
 Description: Andy language runtime library
 Version: @VERSION@
-Libs: -L${libdir} -landy_runtime
+Libs: -L${libdir} -lm -landy_runtime
 Cflags: -I${includedir}

@@ -115,12 +115,14 @@
 (defun compile-c-file (file)
   "Compile the C file produced by the transpiler using pkg-config flags."
   (check-andy-runtime-installed)
-  (let ((cfile (compile-source-to-c file)))
-    (format t "Wrote ~A~%Compiling ~A to object file....~%" cfile cfile)
+  (let* ((cfile (compile-source-to-c file))
+	 (ofile (concatenate
+		 'string (pathname-name cfile) ".o")))
+    (format t "Wrote ~A~%Compiling to object file ~A....~%" cfile ofile)
     (uiop:run-program
-     `(,*CC* ,cfile ,*cflags* ,*ldflags* "-o" ,(pathname-name cfile))
+     `(,*CC* "-c" ,cfile ,*cflags* "-o" ,ofile))
      :output *standard-output*
-     :error-output *standard-output*)))
+     :error-output *standard-output*))
 
 (defun setup-c-compiler ()
   "Find the c compiler and set compiler flags."
@@ -155,6 +157,7 @@
       (setf *files* (reverse *files*))))
 
 (defun andy-help ()
+  "Print a helpful message before bailing..."
   (write-line "
 
 andyc [options] file.andy [module.o ...]
@@ -166,16 +169,29 @@ Options:
 ")
   (uiop:quit))
 
-(defun main ()
+(defun run-compiler ()
   "Parse command line args and compile files or build project."
   (let ((args (uiop:command-line-arguments))
 	(xpiler #'compile-c-file))
     (parse-args args)
-    ;; Set the backend
+    ;; Set the backend target (-t)
     (if (eq *target* :WASM)
 	(setf xpiler #'compile-source-to-wasm)
 	(setup-c-compiler))
-    ;; Compile Source Files
+    ;; Compile Source Files (-c)
     (if *compile-only-p*
 	(dolist (f *files*)
 	  (funcall xpiler f)))))
+
+(defun main ()
+  "Driver for compiler w/error handler"
+  ;; Exception Handler
+  ;;  - prevents program errors from launching debugger
+  (handler-case
+      (progn
+        (run-compiler)
+        (sb-ext:exit :code 0))
+    (error (e)
+      (format *error-output* "Internal compiler error: ~a~%" e)
+      (sb-ext:exit :code 1))))
+
