@@ -1,0 +1,42 @@
+program bmi
+
+const float i2m = 0.0254,         // Inches to Meters 
+      float p2k = 0.453592;       // Pounds to Kilograms
+
+float height, weight, bmi;
+
+begin
+
+   // Read Data
+   write "Enter your weight (lbs): ";
+   read weight;
+   write "Enter your height (inches): ";
+   read height;
+
+   // Calculate BMI
+   weight := weight * p2k;
+   height := height * i2m;
+   bmi    := weight / (height * height);
+
+   // Print Result
+   setSigDigits(1);               // Set 1 Significant Digit
+   write "Your BMI is: ";
+   write bmi;
+   writeNL;
+
+   // Assess Results
+   if bmi < 25.0 then
+      write "You area healthy.";
+   else
+      begin
+         if bmi < 30.0 then
+	    write "You are Overweight.";
+	 else
+	    write "You are Obese!";
+
+         writeNL;
+         write "You need to lose";
+	 write (weight - (24.9 * (height * height))) / p2k;
+	 write " lbs to be healthy.";
+      end
+end.

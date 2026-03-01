@@ -8,8 +8,8 @@
 
 (in-package :andy.c-emitter)
 
-(defvar *stream* nil)			; Output stream
-
+(defvar *stream* nil)
+(defvar *module-name* nil)
 
 ;;; Operator Associations Table
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -76,7 +76,10 @@
 
 (defun emit-funcall (f)
   ;; Get Function Call Name
-  (let ((name (funcall-symbol f))
+  (let ((name
+	  ;; Module-local function calls
+	  (concatenate 'string *module-name* "_"
+		       (funcall-symbol f)))
 	(sym  (funcall-binding f)))
     ;; Convert to Andy Runtime Call, If Builtin
     (when (eq (abstract-symbol-kind sym) :builtin)
@@ -206,21 +209,25 @@
 
 ;;; Conditional Expression
 (defmethod emit-c-expression ((expr conditional-expression))
+  (emit-str "(")
   ;; LHS Expression
   (emit-c-expression (cond-lhs expr))
   ;; Operator
   (emit-c-operator (cond-op expr))
   ;; RHS Expression
-  (emit-c-expression (cond-rhs expr)))
+  (emit-c-expression (cond-rhs expr))
+  (emit-str ")"))
 
 ;;; Binary Operations
 (defmethod emit-c-expression ((expr binary-expression))
+  (emit-str "(")
   ;; LHS Expression
   (emit-c-expression (binary-lhs expr))
   ;; Operator
   (emit-c-operator (binary-op expr))
   ;; RHS Expression
-  (emit-c-expression (binary-rhs expr)))
+  (emit-c-expression (binary-rhs expr))
+  (emit-str ")"))
 
 
 ;;;			   Emit Statements
@@ -236,10 +243,11 @@
 (defun emit-assignment (stmnt)
   (let ((lhs-sym (id-symbol (assign-var stmnt)))
 	(rhs-exp (assign-expr stmnt)))
-    (emit "~A = " lhs-sym)
+    (emit-str "~A = " lhs-sym)
     (emit-c-expression rhs-exp)))
   
 (defmethod emit-c-statement ((stmnt assign-statement))
+  (emit-indent)
   (emit-assignment stmnt)
   (emit-str-nl ";"))
 
@@ -333,6 +341,7 @@
 
 ;;; Funcall Statement
 (defmethod emit-c-statement ((stmnt function-call))
+  (emit-indent)
   (emit-funcall stmnt)
   (emit-str-nl ");"))
 
@@ -343,6 +352,18 @@
   (emit-c-expression (return-expr stmnt))
   (emit-str-nl ";"))
 
+;;; Read Statement
+(defmethod emit-c-statement ((stmnt read-statement))
+  (let* ((id-var (read-var stmnt))
+	 (name (id-symbol id-var))
+	 (sym (id-binding id-var))
+	 (type (abstract-symbol-type sym)))
+    (case type
+      (:int
+       (emit-line "~A = andy_read_int();" name))
+      (:float
+       (emit-line "~A = andy_read_float();" name)))))
+  
 ;;; Write Statement
 (defmethod emit-c-statement ((stmnt write-statement))
   (if (write-nl stmnt)
@@ -369,8 +390,8 @@
 (defun emit-c-function-signature (f)
   "Emit the C Function Signature"
   ;; Function Type and Name
-  (emit "static ~A ~A("
-	(get-andy-type (func-type f)) (func-symbol f))
+  (emit "static ~A ~A_~A("
+	(get-andy-type (func-type f)) *module-name* (func-symbol f))
   ;; Function Parameters
   (loop for param in (func-params f)
 	for i from 0
@@ -430,6 +451,7 @@
     (emit-line "/* Initialize Program Heap Allocation */")
     (emit-line "andy_runtime_init();")
     (emit-newline)
+    (emit-line "/* Main Program Body */")
     (emit-c-statement stmnt)
     (emit-newline)
     (emit-line "return EXIT_SUCCESS;")
@@ -438,8 +460,10 @@
 
 ;;; Emit C Output File
 (defun emit-c (ast fn)
+  ;; Record Module Being Written
+  (setf *module-name* (andy.ast:program-name ast))
   ;; Output filename matches source file specification
-  (when (not (string= (andy.ast:program-name ast)
+  (when (not (string= *module-name*
 		      (pathname-name fn)))
     (format t "~%~%WARNING: Source filename and ~A name do not match.~%~%"
 	    (program-type ast))

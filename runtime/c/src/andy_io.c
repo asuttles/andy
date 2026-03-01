@@ -8,24 +8,80 @@
 
 #define BUFF_LEN 256
 
+// Module Private State Data
+static int andy_field_size = 5;	        /* field size for numeric printing */
+static int andy_sig_digits = 3;		/* significant digits for floats   */
+
+// State Setters
+void andy_set_fieldsize(int size) {
+
+    andy_field_size = size;
+}
+
+void andy_set_sigDigits(int size) {
+
+    andy_sig_digits = size;
+}
+
+
+// Write
+
 void andy_print_newline(void) {
 
     printf("\n");
 }
 
-void andy_print_int(int64_t x) {
+void andy_print_int(andy_int x) {
 
-  printf("%lli", x);
+    printf("%*lld", andy_field_size, (long long)x);
 }
 
-void andy_print_float(double x) {
+void andy_print_float(andy_float x) {
 
-  printf("%.3f", x);
+    printf("%*.*f", andy_field_size, andy_sig_digits, (double)x);
 }
 
 void andy_print_string(andy_string s) {
   printf("%s", s.data);
 }
+
+// Read
+
+/* Read an integer from stdin */
+andy_int andy_read_int(void) {
+    
+    char buff[128];
+    char *endPtr;		/* Point 1 char beyond numeric seq */
+
+    if (!fgets(buff, sizeof(buff), stdin))
+        andy_panic("error: failed to read integer from stdin");
+
+    long long tmp = strtoll(buff, &endPtr, 10);
+
+    if (endPtr == buff)          /* no digits */
+	andy_panic("error: failed to read integer from stdin");
+
+    return (andy_int)tmp;
+}
+
+
+/* Read a float from stdin */
+andy_float andy_read_float() {
+    
+    char buff[128];
+    char *endPtr;
+
+    if (!fgets(buff, sizeof buff, stdin))
+        andy_panic("error: failed to read float from stdin");
+
+    double tmp = strtod(buff, &endPtr);
+
+    if (endPtr == buff)
+	andy_panic("error: failed to read float from stdin");
+
+    return (andy_float)tmp;
+}
+
 
 /* Read input string from stdin */
 andy_string* andy_read_string(arena_t* aptr) {

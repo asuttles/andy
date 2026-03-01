@@ -1,0 +1,56 @@
+program orm
+
+const float RND = 5.0;
+
+int reps;
+float weight, orm, scale, prcnt;
+
+// Round Weight X to 'RND' units
+fun round(float x) :float
+
+   float tmp;
+   
+   begin
+      // Round Weight to Nearest 5
+      tmp := floor(x / RND);
+      tmp := tmp * RND;
+
+      return tmp;
+   end
+
+begin
+   // Get User Input
+   write "Enter working weight: ";
+   read weight;
+   write "Enter reps: ";
+   read reps;
+
+   // Calculate 1RM using Brzycki Formula
+   orm := weight / (1.0278 - (int2float(reps) * 0.0278));
+
+   // Configure Printing Format
+   setFieldSize(9);
+   setSigDigits(2);
+
+   // Write 1 Rep Max
+   writeNL;
+   write "One Rep Max: ";
+   write orm;   
+   writeNL;
+   writeNL;
+   
+   // Output Table
+   for prcnt := 1.0; prcnt > 0.55; prcnt := prcnt - 0.05; do
+      begin
+         // Brzycki Formula
+	 weight := orm * prcnt;
+         reps := float2int(37.0 - ((36.0 * weight) / orm));
+	 // Write Table
+         write prcnt;
+         write reps;
+         write round(weight);
+         writeNL;
+      end
+   writeNL;
+end.
+   

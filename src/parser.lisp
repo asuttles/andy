@@ -150,6 +150,15 @@
   (expect-token parser :semicolon)
   (make-instance 'write-statement :expr nil :nl t))
 
+;;; Read User Input from Console
+(defun parse-read (parser)
+  (expect-token parser :read)
+  (let ((name (get-ident-token parser)))
+    (expect-token parser :semicolon)
+    (make-instance 'read-statement :var
+		   (make-instance 'identifier
+				  :symbol name))))
+
 ;;; If Statement
 (defun parse-if (parser)
   "Parse an if statement from PARSER,
@@ -256,6 +265,7 @@ default: <statement>"
       (:call    (parse-call parser))
       (:return  (parse-return parser))
       (:begin   (parse-begin-block parser))
+      (:read    (parse-read parser))
       (:write   (parse-write parser))
       (:writeNL (parse-writeNL parser))
       (:if      (parse-if parser))

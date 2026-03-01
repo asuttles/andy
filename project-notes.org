@@ -257,6 +257,7 @@ Andy's ALGOL-- to +Wasm+ c Compiler written in Common Lisp.
 |             |        | **TOTAL BYTES:** 140       | **Next free offset: 140**  |
 
 * C Backend Notes
+C Reference: https://en.cppreference.com/w/c.html
   + Decided to try out a C Backend to maximize flexibility
   + Some backend tools to explore:
     - clang -Wall -Wextra -Wpedantic -Werror

@@ -33,6 +33,7 @@
     ("return"    . :return)
     ("begin"     . :begin)
     ("end"       . :end)
+    ("read"      . :read)
     ("write"     . :write)
     ("writeNL"   . :writeNL)
     ("if"        . :if)

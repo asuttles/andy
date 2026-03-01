@@ -258,6 +258,19 @@ Raises an error if the name is already defined in this scope."
       ;; Check Procedure Arguments HERE
       )))
 
+;;; Read from Console
+(defun analyze-read (stmt)
+  (let* ((id-var (read-var stmt))
+	 (name (id-symbol id-var))
+	 (scope (get-local-or-global name))
+	 (sym (lookup-symbol name)))
+    (unless sym
+      (error "Semantic Error: Read to undeclared variable ~A~%" name))
+    (when (eq (abstract-symbol-kind sym) :const)
+      (error "Semantic Error: Read to constant ~A forbidden~%" name))
+    (setf (id-scope id-var) scope)
+    (setf (id-binding id-var) sym)))
+
 ;;; Write to Console
 (defun analyze-write (stmt)
   (let* ((expr (write-expr stmt))
@@ -300,6 +313,10 @@ Raises an error if the name is already defined in this scope."
     ;; Return Statement
     ((typep stmt 'return-statement)
      (analyze-return stmt))
+
+    ;; Read Statement
+    ((typep stmt 'read-statement)
+     (analyze-read stmt))
     
     ;; Write Statement
     ((typep stmt 'write-statement)
