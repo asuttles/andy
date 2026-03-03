@@ -1,0 +1,111 @@
+program craps
+
+// -----------------------------------------------
+// Craps rules:
+//
+// Roll two dice.
+//    First Roll Rules
+//       7 or 11 → win
+//       2, 3, 12 → lose
+// otherwise → that number becomes the “point”
+//
+// Keep rolling:
+//    If you roll the point again → win
+//    If you roll 7 → lose
+// -----------------------------------------------
+
+const int WIN  = 0,
+      int LOSE = 1,
+      int DRAW = 2;
+      
+int point, rollNum, sum, result;
+
+
+// Roll the Dice
+fun rollDice(int x) :int
+
+   int die1, die2;
+
+   begin
+      rollNum := rollNum + 1;
+      die1 := randomInt(5) + 1;
+      die2 := randomInt(5) + 1;
+
+      write "Dice Roll: ";
+      write die1;
+      write " ";
+      write die2;
+      write "  -->";
+      write die1 + die2;
+      writeNL;
+
+      return die1 + die2;
+   end
+
+
+// Determine Win, Lose, or Draw
+fun winLoseDraw(int x) :int
+
+   begin
+
+      // Roll 1
+      if rollNum = 1 then
+         if sum = 7 or sum = 11 then
+	    return 0;
+	 else if sum = 2 or sum = 3 or sum = 12 then
+	    return 1;
+         else
+	    begin
+	       point := sum;
+	       write "Point: ";
+	       write point; writeNL; writeNL;
+               return 2;
+	    end
+
+      // Rolls 2...n	 
+      else
+         if sum = point then
+	    return 0;
+	 else if sum = 7 then
+	    return 1;
+	 else
+	    return 2;
+   end	 
+
+
+// Main Program
+begin
+
+   writeNL; write "CRAPS!"; writeNL; writeNL;
+   setFieldSize(3);
+   
+   rollNum := 0;		        // Initial State
+   result := 2;
+
+   randomize();
+
+   while result = 2 do                  // Dice Roll Loop
+      begin
+         sum := rollDice(1);
+         result := winLoseDraw(1);
+         
+         switch (result)	        // Determine win, lose, draw
+            case 0:
+               begin
+                  write "You Win!"; writeNL;
+         	  return 0;
+               end
+            case 1:
+               begin
+               	  write "You lose!"; writeNL;
+         	  return 0;
+               end
+            case 2:
+	       begin
+                  write "...roll again..."; 
+		  pressEnter();
+	       end
+	       
+         writeNL;
+      end
+end.	    

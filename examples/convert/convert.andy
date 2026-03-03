@@ -1,0 +1,85 @@
+program convert
+
+int choice;
+
+fun f2c(int x) :void
+
+   float temp;
+
+   begin
+      setSigDigits(1);
+      write "Enter temp in Fahrenheit: ";
+      read temp;
+      temp := (temp - 32.0) / (9.0 / 5.0);
+      write "  > ";
+      write temp;
+      write " degrees C";
+   end
+
+fun c2f(int x) :void
+
+   float temp;
+
+   begin
+      setSigDigits(1);   
+      write "Enter temp in Celcius: ";
+      read temp;
+      temp := (temp * (9.0 / 5.0)) + 32.0;
+      write "  > ";
+      write temp;
+      write " degrees F";
+   end
+
+fun k2p(int x) :void
+
+   float weight;
+
+   begin
+      setSigDigits(1);   
+      write "Enter weight in Kilograms: ";
+      read weight;
+      weight := weight * 2.20462262;
+      write "  > ";
+      write weight;
+      write " pounds";
+   end
+
+fun p2k(int x) :void
+
+   float weight;
+
+   begin
+      setSigDigits(1);   
+      write "Enter weight in Pounds: ";
+      read weight;
+      weight := weight / 2.20462262;
+      write "  > ";
+      write weight;
+      write " kilograms";
+   end
+
+begin
+   write "Choose a unit conversion: "; writeNL;
+   write "  1) Celsius to Fahrenheit"; writeNL;
+   write "  2) Fahrenheit to Celsius"; writeNL;
+   write "  3) Kilogram to Pounds"; writeNL;
+   write "  4) Pounds to Kilograms"; writeNL;
+   write "  0) Exit"; writeNL;
+   write "  > ";
+   read choice;
+
+   switch (choice)
+      case 0:
+            break;
+      case 1:
+	    c2f(1);
+      case 2:
+	    f2c(1);
+      case 3:
+	    k2p(1);
+      case 4:
+	    p2k(1);
+      default:
+            write "Invalid Choice";
+   writeNL;
+end.

@@ -84,8 +84,11 @@ Raises an error if the name is already defined in this scope."
     ;; Match arguments with function parameters
     (let ((arg-types (mapcar #'analyze-expression (andy.ast:funcall-args f)))
 	  (param-types (mapcar #'expr-type (abstract-symbol-params symbol))))
-      (unless (equal arg-types param-types)
-	(error "Semantic Error: Call func ~A has wrong argument types." name)))
+      (if arg-types
+	  (unless (equal arg-types param-types)
+	    (error "Semantic Error: Call of func ~A has wrong argument types." name))
+	  (unless (eq :void (car param-types))
+	    (error "Semantic Error: Call of func ~A does not take an argument." name))))
     ;; Return the function type
     (setf (expr-type f) (abstract-symbol-type symbol))))
 
@@ -365,7 +368,8 @@ Raises an error if the name is already defined in this scope."
        (setf (switch-label stmt) label)
        (push label *loop-stack*)
        (analyze-cases cases)
-       (analyze-statement default)
+       (when default
+	 (analyze-statement default))
        (pop *loop-stack*)))
 
     ;; Break

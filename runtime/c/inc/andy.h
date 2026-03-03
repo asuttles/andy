@@ -9,6 +9,7 @@
 #include "andy_error.h"
 #include "andy_io.h"
 #include "andy_math.h"
+#include "andy_random.h"
 #include "andy_runtime.h"
 
 #endif

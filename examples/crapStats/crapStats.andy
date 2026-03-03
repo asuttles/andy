@@ -1,0 +1,84 @@
+program crapStats
+
+// -----------------------------------------------
+// Calculate the probability of winning the
+// dice game: Craps
+// -----------------------------------------------
+
+const int WIN  = 0,
+      int LOSE = 1,
+      int DRAW = 2;
+      
+int i, point, rollNum, sum, result, sumWins, sumLoses;
+
+
+// Roll the Dice
+fun rollDice(int x) :int
+
+   int die1, die2;
+
+   begin
+      rollNum := rollNum + 1;
+      die1 := randomInt(5) + 1;
+      die2 := randomInt(5) + 1;
+
+      return die1 + die2;
+   end
+
+
+// Determine Win, Lose, or Draw
+fun winLoseDraw(int x) :int
+
+   begin
+
+      // Roll 1
+      if rollNum = 1 then
+         if sum = 7 or sum = 11 then
+	    return 0;
+	 else if sum = 2 or sum = 3 or sum = 12 then
+	    return 1;
+         else
+	    begin
+	       point := sum;
+               return 2;
+	    end
+
+      // Rolls 2...n	 
+      else
+         if sum = point then
+	    return 0;
+	 else if sum = 7 then
+	    return 1;
+	 else
+	    return 2;
+   end	 
+
+
+// Main Program
+begin
+
+   randomize();
+   sumWins  := 0;
+   sumLoses := 0;
+
+   for i := 0; i < 1000000; i := i + 1; do
+      begin
+         rollNum := 0;		        // Initial State
+         result := DRAW;
+   
+         while result = DRAW do                  // Dice Roll Loop
+            begin
+               sum := rollDice(1);
+               result := winLoseDraw(1);
+            
+               switch (result)	        // Determine win, lose, draw
+                  case 0:
+   	             sumWins := sumWins + 1;
+                  case 1:
+   	             sumLoses := sumLoses + 1;
+            end
+      end
+
+   write "wins:  "; write sumWins;  writeNL;
+   write "loses: "; write sumLoses; writeNL;
+end.	    

@@ -19,6 +19,7 @@
 (defvar *target* :C)
 (defvar *compile-only-p* nil) 		; Compile source or build project
 (defvar *files* nil)
+(defvar *exefile* nil)			; Executable name
 
 ;;; C Compiler Parameters
 (defvar *CC* nil)
@@ -85,7 +86,7 @@
 	(format t "Andy Runtime Install Check - complete~%")
 	(error "Compiler Error: Andy Runtime is not installed."))))
 
-(defun compile-source-to-c (infile)
+(defun compile-andy-to-c (infile)
   (let* ((cfile (concatenate 'string
 			     (pathname-name infile) ".c"))
 	 (source  (read-file infile))
@@ -100,35 +101,67 @@
 
 (defun get-andy-runtime-cflags ()
   "Return CFLAGS for andy_runtime."
-  (string-right-trim '(#\Space #\Tab #\Newline)
-   (uiop:run-program
-    '("pkg-config" "--cflags" "andy_runtime")
-    :output :string)))
+  (uiop:split-string
+   (string-trim
+    '(#\Space #\Tab #\Newline)
+    (uiop:run-program
+     '("pkg-config" "--cflags" "andy_runtime")
+     :output :string))))
 
 (defun get-andy-runtime-ldflags ()
   "Return LDFLAGS for andy_runtime."
-  (string-trim '(#\Space #\Tab #\Newline)
-   (uiop:run-program
-    '("pkg-config" "--libs" "andy_runtime")
-    :output :string)))
-
-(defun compile-c-file (file)
-  "Compile the C file produced by the transpiler using pkg-config flags."
-  (check-andy-runtime-installed)
-  (let* ((cfile (compile-source-to-c file))
-	 (ofile (concatenate
-		 'string (pathname-name cfile) ".o")))
-    (format t "Wrote ~A~%Compiling to object file ~A....~%" cfile ofile)
+  (uiop:split-string 
+   (string-trim
+    '(#\Space #\Tab #\Newline)
     (uiop:run-program
-     `(,*CC* "-c" ,cfile ,*cflags* "-o" ,ofile))
+     '("pkg-config" "--libs" "andy_runtime")
+     :output :string))))
+
+(defun compile-c-file (cfile)
+  "Compile c file to objfile."
+  (check-andy-runtime-installed)  
+  (let* ((ofile
+	   (concatenate
+	    'string (pathname-name cfile) ".o")))
+    (format t "Compiling ~A to ~A...~%" cfile ofile)
+    (uiop:run-program
+     `(,*CC* "-c" ,cfile ,@*cflags* "-o" ,ofile)
      :output *standard-output*
-     :error-output *standard-output*))
+     :error-output *standard-output*)
+    ofile))
 
 (defun setup-c-compiler ()
   "Find the c compiler and set compiler flags."
   (setf *CC* (detect-c-compiler)
 	*cflags* (get-andy-runtime-cflags)
 	*ldflags* (get-andy-runtime-ldflags)))
+
+(defun compile-file-to-obj (file)
+  (let ((ext (pathname-type file)))
+    (cond
+      ;; Object Files
+      ((string= ext "o") file)
+      ;; C Files
+      ((string= ext "c")
+       (compile-c-file file))
+      ;; Andy Files
+      ((string= ext "andy")
+       (compile-c-file
+	(compile-andy-to-c file)))
+      ;; Unknown filetype
+      (t (error "Unknown filetype for file: ~A" f)))))
+
+(defun build-c-project ()
+  "Build the executable file"
+  (let ((ofiles '()))
+    (dolist (f *files*)
+      (push (compile-file-to-obj f) ofiles))
+    (unless *exefile* (setf *exefile* "a.exe"))
+    (let ((build `(,*CC* ,@ofiles ,@*ldflags* "-o" ,*exefile*)))
+      (format t "Building executable: ~A~%" *exefile*)
+      (uiop:run-program build
+			:output *standard-output*
+			:error-output *standard-output*))))
 
 ;;; ------------------------------------------------------------------
 ;;;			     MAIN DRIVER
@@ -149,6 +182,10 @@
 	;; Compile Only Predicate: -c
 	((string= arg "-c")
 	 (setf *compile-only-p* t))
+	;; Output filename
+	((string= arg "-o")
+	 (if args
+	     (setf *exefile* (pop args))))
 	;; Save Filenames
 	(t (push arg *files*)))))
   ;; Set filelist to command-line order
@@ -160,9 +197,10 @@
   "Print a helpful message before bailing..."
   (write-line "
 
-andyc [options] file.andy [module.o ...]
+andyc [options] FILE.[andy c o]
 
 Options:
+  -o              <executable name>
   -t              <c|wasm>
   -c              compile only, do not link
 
@@ -172,7 +210,7 @@ Options:
 (defun run-compiler ()
   "Parse command line args and compile files or build project."
   (let ((args (uiop:command-line-arguments))
-	(xpiler #'compile-c-file))
+	(xpiler #'compile-file-to-obj))
     (parse-args args)
     ;; Set the backend target (-t)
     (if (eq *target* :WASM)
@@ -181,7 +219,9 @@ Options:
     ;; Compile Source Files (-c)
     (if *compile-only-p*
 	(dolist (f *files*)
-	  (funcall xpiler f)))))
+	  (funcall xpiler f))
+	;; Build Project
+	(build-c-project))))
 
 (defun main ()
   "Driver for compiler w/error handler"

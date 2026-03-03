@@ -223,7 +223,6 @@ of the form case integer: <statements>"
 	     (let ((lbl (get-integer-token parser))
 		   (body (progn (expect-token parser :colon)
 				(parse-statements parser))))
-	       (format t "Processing Case: ~A~%" lbl)
 	       (push (make-instance 'case-statement
 				    :label lbl
 				    :body  body) case-list)))

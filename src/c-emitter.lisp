@@ -102,6 +102,7 @@
     (:int "andy_int")
     (:float "andy_float")
     (:string "andy_string")
+    (:void "void")
     (t (error "Emitter: Unknown data type: ~A" type))))
 
 ;;; Function Hoisting - Coll all funcs at top-level
@@ -207,28 +208,46 @@
   (emit-funcall expr)
   (emit-str ")"))
 
+;;; Check to see if expression is single or binary
+(defun is-binary-p (expr)
+  (or (typep expr 'conditional-expression)
+      (typep expr 'binary-expression)))
+
 ;;; Conditional Expression
 (defmethod emit-c-expression ((expr conditional-expression))
-  (emit-str "(")
-  ;; LHS Expression
-  (emit-c-expression (cond-lhs expr))
-  ;; Operator
-  (emit-c-operator (cond-op expr))
-  ;; RHS Expression
-  (emit-c-expression (cond-rhs expr))
-  (emit-str ")"))
+  (let* ((lhs (cond-lhs expr))
+	 (rhs (cond-rhs expr))
+	 ;; Are lhs/rhs binary expressions?
+	 (bin-lhs (is-binary-p lhs))
+	 (bin-rhs (is-binary-p rhs)))
+    ;; LHS Expression
+    (when bin-lhs (emit-str "("))
+    (emit-c-expression lhs)
+    (when bin-lhs (emit-str ")"))    
+    ;; Operator
+    (emit-c-operator (cond-op expr))
+    ;; RHS Expression
+    (when bin-rhs (emit-str "("))
+    (emit-c-expression rhs)
+    (when bin-rhs (emit-str ")"))))
 
 ;;; Binary Operations
 (defmethod emit-c-expression ((expr binary-expression))
-  (emit-str "(")
-  ;; LHS Expression
-  (emit-c-expression (binary-lhs expr))
-  ;; Operator
-  (emit-c-operator (binary-op expr))
-  ;; RHS Expression
-  (emit-c-expression (binary-rhs expr))
-  (emit-str ")"))
-
+  (let* ((lhs (binary-lhs expr))
+	 (rhs (binary-rhs expr))
+	 ;; Are lhs/rhs binary expressions?
+	 (bin-lhs (is-binary-p lhs))
+	 (bin-rhs (is-binary-p rhs)))
+    ;; LHS Expression
+    (when bin-lhs (emit-str "("))    
+    (emit-c-expression lhs)
+    (when bin-lhs (emit-str ")"))    
+    ;; Operator
+    (emit-c-operator (binary-op expr))
+    ;; RHS Expression
+    (when bin-rhs (emit-str "("))    
+    (emit-c-expression rhs)
+    (when bin-rhs (emit-str ")"))))
 
 ;;;			   Emit Statements
 ;;; ------------------------------------------------------------------
@@ -305,16 +324,14 @@
 	    (body (case-body c)))
 	(emit-line "case ~A:" label)
 	(indent)
-	(dolist (s body)
-	  (emit-c-statement s))
+	(emit-c-statement body)
 	(emit-line "break;")
 	(outdent)))
     ;; default:
     (when def
       (emit-line "default:")
       (indent)
-      (dolist (s def)
-	(emit-c-statement s))
+      (emit-c-statement def)
       (outdent))
     ;; ... }
     (outdent)

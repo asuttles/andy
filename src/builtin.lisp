@@ -22,8 +22,13 @@
     ("tan"          :params (:float)        :type :float :runtime "andy_tan")
     ("exp"          :params (:float)        :type :float :runtime "andy_exp")
     ("ln"           :params (:float)        :type :float :runtime "andy_ln")
+    ("pressEnter"   :params (:void)         :type :void  :runtime "andy_press_enter")
     ("setFieldSize" :params (:int)          :type :void  :runtime "andy_set_fieldsize")
-    ("setSigDigits" :params (:int)          :type :void  :runtime "andy_set_sigDigits")))
+    ("setSigDigits" :params (:int)          :type :void  :runtime "andy_set_sigDigits")
+    ("randomize"    :params (:void)         :type :void  :runtime "andy_randomize")
+    ("random"       :params (:void)         :type :float :runtime "andy_random")
+    ("seed"         :params (:int)          :type :int   :runtime "andy_seed")
+    ("randomInt"    :params (:int)          :type :int   :runtime "andy_random_int")))
 
 ;;; Handle Built-In Functions
 (defun get-builtin-func (name)

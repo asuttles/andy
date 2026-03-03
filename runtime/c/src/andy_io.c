@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-
-#include "andy_arena.h"
-#include "andy_error.h"
 #include "andy_io.h"
 
 
@@ -42,7 +37,8 @@ void andy_print_float(andy_float x) {
 }
 
 void andy_print_string(andy_string s) {
-  printf("%s", s.data);
+
+    printf("%s", s.data);
 }
 
 // Read
@@ -124,4 +120,10 @@ andy_string* andy_read_string(arena_t* aptr) {
   memcpy(str->data, buff, len + 1);
   
   return str;
+}
+
+void andy_press_enter(void) {
+
+  puts("Press Enter to continue.");
+  getchar();
 }
