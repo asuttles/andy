@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "error.h"
+#include "andy_error.h"
 
 void andy_warn(const char *msg) {
 

@@ -46,7 +46,7 @@ fi
 if ! pkg-config --exists andy_runtime; then
     echo "andy_runtime not found via pkg-config."
 
-    if [ -f "$RUNTIME_DIR/Makefile" ]; then
+    if [ -f "$RUNTIME_DIR/makefile" ]; then
         echo "Attempting to build andy_runtime from $RUNTIME_DIR..."
         (cd "$RUNTIME_DIR" && make)
 

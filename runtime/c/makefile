@@ -1,23 +1,23 @@
 # On msys64:    make install PREFIX=/mingw64
 # On linux/bsd: make install
 PREFIX ?= /usr/local
-VERSION ?= 0.9.3
+VERSION ?= 0.9.2
 
-ROOT    := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+ROOT = $(CURDIR)
 
-INC = inc/*.h
+INC   = inc/*.h
 PC_IN = pc/andy_runtime.pc.in
-PC = pc/andy_runtime.pc
+PC    = pc/andy_runtime.pc
 
 
-CC      := clang
-CFLAGS  := -std=c23 -Wall -Wextra -Wpedantic -O3 -Iinc
+CC      = clang
+CFLAGS  = -std=c23 -Wall -Wextra -Wpedantic -O3 -Iinc
 
-SRC     := $(wildcard src/*.c)
-OBJ     := $(SRC:.c=.o)
-LIB     := libandy_runtime.a
+SRC    != ls src/*.c 2>/dev/null
+OBJ     = $(SRC:.c=.o)
+LIB     = libandy_runtime.a
 
-AR      := ar
+AR      = ar
 
 LDFLAGS += $(ROOT)
 
