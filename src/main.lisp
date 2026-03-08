@@ -15,6 +15,9 @@
 
 (in-package :andy.main)
 
+;;; Compiler Version
+(defparameter +andy-version+ "0.9.4")
+
 ;;; Compiler State
 (defvar *target* :C)
 (defvar *compile-only-p* nil) 		; Compile source or build project
@@ -167,6 +170,27 @@
 ;;;			     MAIN DRIVER
 ;;; ------------------------------------------------------------------
 
+(defun andy-version ()
+  "Print the compiler version"
+  (format t "andyc version ~A~%" +andy-version+)
+  (uiop:quit))
+
+(defun andy-help ()
+  "Print a helpful message before bailing..."
+  (write-line "
+
+andyc [options] FILE.[andy c o]
+
+Options:
+  -o name      name of executable
+  -t <c|wasm>  backend target c or wasm
+  -c           compile only, do not link
+  -v           print version
+  -h           print this help message
+
+")
+  (uiop:quit))
+
 (defun parse-args (args)
   "Parse command-line args and set global state vars"
   (loop while args do
@@ -186,26 +210,23 @@
 	((string= arg "-o")
 	 (if args
 	     (setf *exefile* (pop args))))
+	;; Print Compiler Version
+	((string= arg "-v")
+	 (andy-version))
+	;; Print Help Message
+	((string= arg "-h")
+	 (andy-help))
+	;; Unknown Switch
+	((char= (char arg 0) #\-)
+	 (progn
+	   (format t "Unknown switch: ~A~%" arg)
+	   (andy-help)))
 	;; Save Filenames
 	(t (push arg *files*)))))
   ;; Set filelist to command-line order
   (if (null *files*)
       (andy-help)
       (setf *files* (reverse *files*))))
-
-(defun andy-help ()
-  "Print a helpful message before bailing..."
-  (write-line "
-
-andyc [options] FILE.[andy c o]
-
-Options:
-  -o              <executable name>
-  -t              <c|wasm>
-  -c              compile only, do not link
-
-")
-  (uiop:quit))
 
 (defun run-compiler ()
   "Parse command line args and compile files or build project."

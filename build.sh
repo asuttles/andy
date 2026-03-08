@@ -74,9 +74,15 @@ echo "Building SBCL standalone executable: $EXE_NAME"
 # -----------------------
 # 4. Install the executable
 # -----------------------
-echo "Installing $EXE_NAME to $INSTALL_DIR"
+echo "Trying to Install $EXE_NAME to $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
-install -m 755 "$EXE_NAME" "$INSTALL_DIR"
+if [ ! -w "$INSTALL_DIR" ]; then
+    echo "Cannot write to $INSTALL_DIR."
+    echo "use sudo install -m 755 $EXE_NAME $INSTALL_DIR to install"
+    exit 1
+else
+    install -m 755 "$EXE_NAME" "$INSTALL_DIR"
+fi
 
 echo "Build and install complete: $INSTALL_DIR/$EXE_NAME"
 echo "Tip: You can override PREFIX by running: PREFIX=\$HOME/.local ./build.sh"
