@@ -21,9 +21,9 @@ AppData/*
 # Ignore old example programs
 examples/old/*
 
-# Un-ignore inc files
-!inc/
-!inc/**/*.wat
+# Un-ignore runtime wasm files
+!runtime/wat/
+!runtime/wat/*wat
 
 # Un-ignore runtime c source files
 !runtime/c/

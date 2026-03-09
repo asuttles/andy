@@ -178,7 +178,6 @@
 (defun andy-help ()
   "Print a helpful message before bailing..."
   (write-line "
-
 andyc [options] FILE.[andy c o]
 
 Options:
@@ -187,7 +186,6 @@ Options:
   -c           compile only, do not link
   -v           print version
   -h           print this help message
-
 ")
   (uiop:quit))
 

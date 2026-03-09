@@ -67,8 +67,9 @@ fi
 echo "Building SBCL standalone executable: $EXE_NAME"
 
 "$SBCL_EXEC" --no-sysinit \
-          --eval "(ql:quickload :$PROJECT_NAME)" \
-          --eval "(sb-ext:save-lisp-and-die \"$EXE_NAME\" :toplevel #'$MAIN_FUNCTION :executable t)" \
+	     --eval "(load \"$HOME/quicklisp/setup.lisp\")" \
+	     --eval "(ql:quickload :$PROJECT_NAME)" \
+             --eval "(sb-ext:save-lisp-and-die \"$EXE_NAME\" :toplevel #'$MAIN_FUNCTION :executable t)" \
           --eval "(quit)"
 
 # -----------------------
