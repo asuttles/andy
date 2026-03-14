@@ -10,6 +10,7 @@ andyc
 *.o
 *.exe
 *.c
+*.pc
 
 # Ignore emacs backup files
 *~
@@ -19,7 +20,7 @@ andyc
 AppData/*
 
 # Ignore old example programs
-examples/old/*
+
 
 # Un-ignore runtime wasm files
 !runtime/wat/
@@ -28,3 +29,10 @@ examples/old/*
 # Un-ignore runtime c source files
 !runtime/c/
 !runtime/c/src/*.c
+
+# Ignore example files, except for andy source code
+examples/*
+!examples/*/
+!examples/**/*.andy
+examples/old/*
+
