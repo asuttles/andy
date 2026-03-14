@@ -28,7 +28,8 @@
     ("randomize"    :params (:void)         :type :void  :runtime "andy_randomize")
     ("random"       :params (:void)         :type :float :runtime "andy_random")
     ("seed"         :params (:int)          :type :int   :runtime "andy_seed")
-    ("randomInt"    :params (:int)          :type :int   :runtime "andy_random_int")))
+    ("randomInt"    :params (:int)          :type :int   :runtime "andy_random_int")
+    ("cls"          :params (:void)         :type :void  :runtime "andy_clearScreen")))
 
 ;;; Handle Built-In Functions
 (defun get-builtin-func (name)

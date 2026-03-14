@@ -7,6 +7,8 @@ float height, weight, bmi;
 
 begin
 
+   cls(); write "BMI Calculator -"; writeNL; writeNL;
+
    // Read Data
    write "Enter your weight (lbs): ";
    read weight;
@@ -39,4 +41,5 @@ begin
 	 write (weight - (24.9 * (height * height))) / p2k;
 	 write " lbs to be healthy.";
       end
+   writeNL; writeNL; writeNL;
 end.

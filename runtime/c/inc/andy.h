@@ -11,5 +11,6 @@
 #include "andy_math.h"
 #include "andy_random.h"
 #include "andy_runtime.h"
+#include "andy_console.h"
 
 #endif
