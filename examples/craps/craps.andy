@@ -31,13 +31,14 @@ fun rollDice(int x) :int
       die1 := randomInt(5) + 1;
       die2 := randomInt(5) + 1;
 
+      underline();
       write "Dice Roll: ";
       write die1;
       write " ";
       write die2;
-      write "  -->";
-      write die1 + die2;
-      writeNL;
+      write "  -->"; 
+      write die1 + die2; 
+      writeNL; reset();
 
       return die1 + die2;
    end
@@ -57,8 +58,9 @@ fun winLoseDraw(int x) :int
          else
 	    begin
 	       point := sum;
+	       bold(); writeNL;
 	       write "Point: ";
-	       write point; writeNL; writeNL;
+	       write point; reset(); writeNL; writeNL;
                return 2;
 	    end
 
@@ -76,6 +78,7 @@ fun winLoseDraw(int x) :int
 // Main Program
 begin
 
+   cls();
    writeNL; write "CRAPS!"; writeNL; writeNL;
    setFieldSize(3);
    
@@ -92,17 +95,21 @@ begin
          switch (result)	        // Determine win, lose, draw
             case 0:
                begin
+	          setFGrgb(0,255,0);
                   write "You Win!"; writeNL;
+		  reset();
          	  return 0;
                end
             case 1:
                begin
+	          setFGrgb(255,0,0);
                	  write "You lose!"; writeNL;
+		  reset();
          	  return 0;
                end
             case 2:
 	       begin
-                  write "...roll again..."; 
+                  write "...roll again..."; writeNL;
 		  pressEnter();
 	       end
 	       

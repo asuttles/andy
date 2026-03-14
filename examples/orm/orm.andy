@@ -20,6 +20,7 @@ fun round(float x) :float
 
 begin
    // Get User Input
+   cls();
    write "Enter working weight: ";
    read weight;
    write "Enter reps: ";
@@ -33,9 +34,9 @@ begin
    setSigDigits(2);
 
    // Write 1 Rep Max
-   writeNL;
-   write "One Rep Max: ";
-   write orm;   
+   writeNL; underline();
+   write "     One Rep Max: ";
+   write orm; reset();   
    writeNL;
    writeNL;
    

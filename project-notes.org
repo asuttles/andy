@@ -256,6 +256,78 @@ Andy's ALGOL-- to +Wasm+ c Compiler written in Common Lisp.
 |-------------+--------+----------------------------+----------------------------|
 |             |        | **TOTAL BYTES:** 140       | **Next free offset: 140**  |
 
+| Category      | Operation                 | Escape Sequence (C string) | Notes                              |
+|---------------+---------------------------+----------------------------+------------------------------------|
+| Reset         | Reset all attributes      | "\x1b[0m"                  | Clears colors and styles           |
+| Screen        | Clear screen              | "\x1b[2J"                  | Clears entire screen               |
+| Screen        | Clear scrollback + screen | "\x1b[3J"                  | Clears terminal scrollback (xterm) |
+| Screen        | Cursor home               | "\x1b[H"                   | Move cursor to 1,1                 |
+| Line          | Clear to end of line      | "\x1b[0K"                  | From cursor → end                  |
+| Line          | Clear to beginning        | "\x1b[1K"                  | From cursor → start                |
+| Line          | Clear entire line         | "\x1b[2K"                  | Clears whole line                  |
+| Cursor        | Move cursor               | "\x1b[%d;%dH"              | row,col parameters                 |
+| Cursor        | Move up                   | "\x1b[%dA"                 | n rows up                          |
+| Cursor        | Move down                 | "\x1b[%dB"                 | n rows down                        |
+| Cursor        | Move right                | "\x1b[%dC"                 | n columns right                    |
+| Cursor        | Move left                 | "\x1b[%dD"                 | n columns left                     |
+| Cursor        | Save cursor               | "\x1b[s"                   | Save current cursor position       |
+| Cursor        | Restore cursor            | "\x1b[u"                   | Restore saved cursor position      |
+| Cursor        | Hide cursor               | "\x1b[?25l"                | Useful for TUIs                    |
+| Cursor        | Show cursor               | "\x1b[?25h"                | Re-enable cursor                   |
+| Style         | Bold                      | "\x1b[1m"                  | Bright/bold text                   |
+| Style         | Dim                       | "\x1b[2m"                  | Faint text                         |
+| Style         | Italic                    | "\x1b[3m"                  | Not supported everywhere           |
+| Style         | Underline                 | "\x1b[4m"                  | Underlined text                    |
+| Style         | Blink                     | "\x1b[5m"                  | Rarely supported                   |
+| Style         | Reverse                   | "\x1b[7m"                  | Swap foreground/background         |
+| Style         | Strikethrough             | "\x1b[9m"                  | Crossed text                       |
+| Color (basic) | Black foreground          | "\x1b[30m"                 |                                    |
+| Color (basic) | Red foreground            | "\x1b[31m"                 |                                    |
+| Color (basic) | Green foreground          | "\x1b[32m"                 |                                    |
+| Color (basic) | Yellow foreground         | "\x1b[33m"                 |                                    |
+| Color (basic) | Blue foreground           | "\x1b[34m"                 |                                    |
+| Color (basic) | Magenta foreground        | "\x1b[35m"                 |                                    |
+| Color (basic) | Cyan foreground           | "\x1b[36m"                 |                                    |
+| Color (basic) | White foreground          | "\x1b[37m"                 |                                    |
+| Color (basic) | Default foreground        | "\x1b[39m"                 | Reset fg only                      |
+| Color (basic) | Default background        | "\x1b[49m"                 | Reset bg only                      |
+| Color (256)   | Set foreground color      | "\x1b[38;5;%dm"            | 0–255 color palette                |
+| Color (256)   | Set background color      | "\x1b[48;5;%dm"            | 0–255 color palette                |
+| Color (true)  | RGB foreground            | "\x1b[38;2;%d;%d;%dm"      | 24-bit color                       |
+| Color (true)  | RGB background            | "\x1b[48;2;%d;%d;%dm"      | 24-bit color                       |
+| Scrolling     | Scroll up                 | "\x1b[%dS"                 | Scroll screen up                   |
+| Scrolling     | Scroll down               | "\x1b[%dT"                 | Scroll screen down                 |
+| Misc          | Terminal bell             | "\a"                       | Audible/visual bell                |
+| Screen        | Enter alternate screen    | "\x1b[?1049h"              | Saves current screen               |
+| Screen        | Leave alternate screen    | "\x1b[?1049l"              | Restores screen                    |
+
+| Color Name   |   R |   G |   B | Notes      |
+|--------------+-----+-----+-----+------------|
+| Black        |   0 |   0 |   0 |            |
+| White        | 255 | 255 | 255 |            |
+| Red          | 255 |   0 |   0 |            |
+| Lime         |   0 | 255 |   0 | Pure green |
+| Blue         |   0 |   0 | 255 |            |
+| Yellow       | 255 | 255 |   0 |            |
+| Cyan         |   0 | 255 | 255 |            |
+| Magenta      | 255 |   0 | 255 |            |
+| Gray         | 128 | 128 | 128 |            |
+| Light Gray   | 192 | 192 | 192 |            |
+| Dark Gray    |  64 |  64 |  64 |            |
+| Orange       | 255 | 165 |   0 |            |
+| Pink         | 255 | 192 | 203 |            |
+| Purple       | 128 |   0 | 128 |            |
+| Brown        | 165 |  42 |  42 |            |
+| Gold         | 255 | 215 |   0 |            |
+| Sky Blue     | 135 | 206 | 235 |            |
+| Navy         |   0 |   0 | 128 |            |
+| Teal         |   0 | 128 | 128 |            |
+| Olive        | 128 | 128 |   0 |            |
+| Forest Green |  34 | 139 |  34 |            |
+| Tomato       | 255 |  99 |  71 |            |
+| Violet       | 238 | 130 | 238 |            |
+
+
 * C Backend Notes
 C Reference: https://en.cppreference.com/w/c.html
   + Decided to try out a C Backend to maximize flexibility

@@ -31,15 +31,18 @@ begin
       write "You area healthy.";
    else
       begin
+         setFGrgb(255,0,0);
          if bmi < 30.0 then
 	    write "You are Overweight.";
 	 else
 	    write "You are Obese!";
-
+         reset();
          writeNL;
+	 underline();
          write "You need to lose";
 	 write (weight - (24.9 * (height * height))) / p2k;
 	 write " lbs to be healthy.";
+	 reset();
       end
    writeNL; writeNL; writeNL;
 end.
