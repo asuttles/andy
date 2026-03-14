@@ -49,6 +49,11 @@ andy_int andy_read_int(void) {
     char buff[128];
     char *endPtr;		/* Point 1 char beyond numeric seq */
 
+    /* Flush output buffers before read */
+    fflush(stdout);
+
+    /* Read stdin */
+    
     if (!fgets(buff, sizeof(buff), stdin))
         andy_panic("error: failed to read integer from stdin");
 
@@ -67,6 +72,11 @@ andy_float andy_read_float() {
     char buff[128];
     char *endPtr;
 
+    /* Flush output buffers before read */
+    fflush(stdout);
+
+    /* Read stdin */
+    
     if (!fgets(buff, sizeof buff, stdin))
         andy_panic("error: failed to read float from stdin");
 
@@ -83,6 +93,9 @@ andy_float andy_read_float() {
 andy_string* andy_read_string(arena_t* aptr) {
 
   char buff[BUFF_LEN];
+
+    /* Flush output buffers before read */
+    fflush(stdout);
 
   /* Allocate the Andy String data type */
   andy_string* str = arena_alloc(aptr, sizeof(andy_string), alignof(andy_string));
@@ -124,6 +137,7 @@ andy_string* andy_read_string(arena_t* aptr) {
 
 void andy_press_enter(void) {
 
+  fflush(stdout);
   puts("Press Enter to continue.");
   getchar();
 }
