@@ -32,7 +32,6 @@ AppData/*
 
 # Ignore example files, except for andy source code
 examples/*
-!examples/*/
 !examples/**/*.andy
 examples/old/*
 
