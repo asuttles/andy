@@ -327,7 +327,6 @@ Andy's ALGOL-- to +Wasm+ c Compiler written in Common Lisp.
 | Tomato       | 255 |  99 |  71 |            |
 | Violet       | 238 | 130 | 238 |            |
 
-
 * C Backend Notes
 C Reference: https://en.cppreference.com/w/c.html
   + Decided to try out a C Backend to maximize flexibility

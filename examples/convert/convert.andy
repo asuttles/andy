@@ -11,9 +11,11 @@ fun f2c(int x) :void
       write "Enter temp in Fahrenheit: ";
       read temp;
       temp := (temp - 32.0) / (9.0 / 5.0);
+      bold();
       write "  > ";
       write temp;
       write " degrees C";
+      reset();
    end
 
 fun c2f(int x) :void
@@ -25,9 +27,11 @@ fun c2f(int x) :void
       write "Enter temp in Celcius: ";
       read temp;
       temp := (temp * (9.0 / 5.0)) + 32.0;
+      bold();
       write "  > ";
       write temp;
       write " degrees F";
+      reset();
    end
 
 fun k2p(int x) :void
@@ -39,9 +43,11 @@ fun k2p(int x) :void
       write "Enter weight in Kilograms: ";
       read weight;
       weight := weight * 2.20462262;
+      bold();
       write "  > ";
       write weight;
       write " pounds";
+      reset();
    end
 
 fun p2k(int x) :void
@@ -53,12 +59,16 @@ fun p2k(int x) :void
       write "Enter weight in Pounds: ";
       read weight;
       weight := weight / 2.20462262;
+      bold();
       write "  > ";
       write weight;
       write " kilograms";
+      reset();
    end
 
 begin
+   cls();
+   write "Unit Conversion Program ---"; writeNL; writeNL;
    write "Choose a unit conversion: "; writeNL;
    write "  1) Celsius to Fahrenheit"; writeNL;
    write "  2) Fahrenheit to Celsius"; writeNL;
@@ -66,7 +76,7 @@ begin
    write "  4) Pounds to Kilograms"; writeNL;
    write "  0) Exit"; writeNL;
    write "  > ";
-   read choice;
+   read choice; writeNL;
 
    switch (choice)
       case 0:

@@ -1,7 +1,7 @@
 # On msys64:    make install PREFIX=/mingw64
 # On linux/bsd: make install
 PREFIX ?= /usr/local
-VERSION ?= 0.9.2
+VERSION ?= 0.9.4
 
 ROOT = $(CURDIR)
 
@@ -41,7 +41,7 @@ clean:
 $(PC): $(PC_IN)
 	sed -e "s|@PREFIX@|$(PREFIX)|g" \
 	    -e "s|@VERSION@|$(VERSION)|g" \
-	    $< > $@
+	    $(PC_IN) > $(PC)
 
 install: $(PC)
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include/andy

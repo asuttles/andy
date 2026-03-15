@@ -1,0 +1,38 @@
+// Estimate value of pi through Monte Carlo Simulation
+//
+// where pi/4 = ratio of random x,y coords lying inside
+//              a circle of radius r, where x,y are
+//              inside a square of dimensions r x r.
+program pi
+
+int i, N, count;
+float x, y;
+
+begin
+
+   cls();
+   write "PI Monte Carlo Simulation -"; writeNL; writeNL;
+   write "Enter how many iterations to try: ";
+   read N; writeNL;
+
+   randomize();
+
+   i := 0;
+   while i < N do
+      begin
+         x := random();
+         y := random();
+         
+         if x*x + y*y <= 1.0 then
+	    count := count + 1;
+
+         i := i + 1;
+      end
+
+   setSigDigits(5);
+   write "Estimate for pi after "; write N;
+   write " iterations is: ";
+   write 4.0 * int2float(count) / int2float(N);
+   writeNL; writeNL; writeNL;
+
+end.
